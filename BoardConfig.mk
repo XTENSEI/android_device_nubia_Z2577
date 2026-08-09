@@ -30,7 +30,7 @@ AB_OTA_PARTITIONS += \
     vbmeta_system \
     vbmeta_vendor
 
-TARGET_SCREEN_HEIGHT := 1600
+TARGET_SCREEN_HEIGHT := 1640
 TARGET_SCREEN_WIDTH := 720
 
 # vendor_boot configuration (recovery lives inside the vendor_boot ramdisk)
@@ -64,7 +64,7 @@ TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a55
 TARGET_BOOTLOADER_BOARD_NAME := Z2577
 TARGET_NO_BOOTLOADER := true
 
-# Display (density 320 from stock ro.sf.lcd_density=320; res verify on device)
+# Display (720x1640 from stock dtb panel-max-x=0x2cf/panel-max-y=0x667; density 320 from ro.sf.lcd_density=320)
 TARGET_SCREEN_DENSITY := 320
 BOARD_KERNEL_SEPARATED_DTBO := true
 
