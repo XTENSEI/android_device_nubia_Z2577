@@ -1,0 +1,2 @@
+# Recovery init for Nubia V80 Max (Z2577) — ro.hardware=ums9230_6h10
+import /init.recovery.common.rc
