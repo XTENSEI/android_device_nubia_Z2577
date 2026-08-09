@@ -51,3 +51,5 @@ on boot
     start gatekeeper-1-0
     start boot-hal-1-2
     start health-hal-2-1
+    start vendor.boot-default
+    start vendor.sprd.boot-aidl-V1-recovery

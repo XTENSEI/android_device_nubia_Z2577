@@ -45,6 +45,10 @@ BOARD_RAMDISK_USE_LZ4 := true
 # Assert
 TARGET_OTA_ASSERT_DEVICE := Z2577
 
+# Platform
+TARGET_BOARD_PLATFORM := ums9230
+BOARD_USES_SPRD_HARDWARE := true
+
 # Architecture
 TARGET_ARCH := arm64
 TARGET_ARCH_VARIANT := armv8-a
@@ -110,6 +114,8 @@ BOARD_GROUP_UNISOC_A_PARTITION_LIST := system system_ext product vendor odm vend
 BOARD_GROUP_UNISOC_A_SIZE := 13686013952
 
 TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
+TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery.fstab
+TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
 # Verified Boot (device is unlocked; recovery uses avb test keys)
 BOARD_AVB_ENABLE := true
@@ -119,6 +125,38 @@ BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --set_hashtree_disabled_flag
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 4
 
 BOARD_SUPPRESS_SECURE_ERASE := true
+
+# Anti-rollback hack (reference trees use 2099 + PLATFORM_VERSION 16.1.0)
+PLATFORM_SECURITY_PATCH := 2099-12-31
+VENDOR_SECURITY_PATCH := 2099-12-31
+PLATFORM_VERSION := 16.1.0
+PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
+
+# Sign vendor_boot with avb test key (device unlocked; P671L pattern)
+BOARD_AVB_VENDOR_BOOT_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
+BOARD_AVB_VENDOR_BOOT_ALGORITHM := SHA256_RSA4096
+BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
+BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX_LOCATION := 1
+
+# TWRP configuration (P671L booted + kl4 decrypt references)
+TW_INCLUDE_FASTBOOTD := true
+TW_THEME := portrait_hdpi
+TW_SCREEN_BLANK_ON_BOOT := true
+TW_INPUT_BLACKLIST := "hbtp_vm"
+TW_USE_TOOLBOX := true
+TW_INCLUDE_REPACKTOOLS := true
+TW_EXCLUDE_APEX := true
+TW_EXCLUDE_DEFAULT_USB_INIT := true
+TARGET_USES_LOGD := true
+TWRP_INCLUDE_LOGCAT := true
+TW_INCLUDE_RESETPROP := true
+TW_INCLUDE_LIBRESETPROP := true
+TW_INCLUDE_LPTOOLS := true
+TW_INCLUDE_AVBCTL := true
+TW_INCLUDE_ZSTD := true
+TW_BRIGHTNESS_PATH := "/sys/class/backlight/sprd_backlight/brightness"
+TW_MAX_BRIGHTNESS := 924
+TW_DEFAULT_BRIGHTNESS := 262
 
 # Crypto / FBE decryption (trusty keymint/gatekeeper HALs from stock)
 TW_INCLUDE_CRYPTO := true
