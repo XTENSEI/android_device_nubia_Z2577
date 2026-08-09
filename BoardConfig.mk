@@ -119,3 +119,24 @@ BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --set_hashtree_disabled_flag
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 4
 
 BOARD_SUPPRESS_SECURE_ERASE := true
+
+# Crypto / FBE decryption (trusty keymint/gatekeeper HALs from stock)
+TW_INCLUDE_CRYPTO := true
+TW_INCLUDE_CRYPTO_FBE := true
+BOARD_USES_METADATA_PARTITION := true
+TW_USE_FSCRYPT_POLICY := 2
+TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper@1.0 \
+    $(TARGET_OUT_SHARED_LIBRARIES)/lib_android_keymaster_keymint_utils \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libcppbor_external \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libcppcose_rkp \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libgatekeeper \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_messages \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libkeymaster_portable \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libkeymint \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libpuresoftkeymasterdevice \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libsoft_attestation_cert \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libtrusty \
+    $(TARGET_OUT_SHARED_LIBRARIES)/libtrustyHalHelper \
+    $(TARGET_OUT_SHARED_LIBRARIES)/vendor.sprd.hardware.trusty-V1-ndk \
+    $(TARGET_OUT_SHARED_LIBRARIES)/vendor.sprd.hardware.trusty@1.0
