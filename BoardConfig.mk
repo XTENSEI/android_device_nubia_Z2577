@@ -66,23 +66,32 @@ TARGET_NO_BOOTLOADER := true
 
 # Display (720x1640 from stock dtb panel-max-x=0x2cf/panel-max-y=0x667; density 320 from ro.sf.lcd_density=320)
 TARGET_SCREEN_DENSITY := 320
+
+# Touch (stock vendor modules; zte_tpd depends on lcd_state_notify)
+TW_LOAD_VENDOR_MODULES := "lcd_state_notify.ko zte_tpd.ko"
 BOARD_KERNEL_SEPARATED_DTBO := true
 
 # Kernel / vendor_boot (values from stock vendor_boot header, MIO-KITCHEN unpack)
 TARGET_NO_KERNEL := true
 BOARD_VENDOR_BASE := 0x00000000
 BOARD_VENDOR_CMDLINE := console=ttyS1,115200n8 bootconfig bootconfig
+BOARD_VENDOR_BOOTCONFIG := $(DEVICE_PATH)/bootconfig
 BOARD_PAGE_SIZE := 4096
 BOARD_KERNEL_OFFSET := 0x00008000
 BOARD_RAMDISK_OFFSET := 0x05400000
 BOARD_TAGS_OFFSET := 0x00000100
 BOARD_HEADER_SIZE := 2128
-# Prebuilt DTB (prebuilt/dtb.img) + dtb mkbootimg args land in a later commit
+TARGET_PREBUILT_DTB := $(DEVICE_PATH)/prebuilt/dtb.img
+BOARD_DTB_SIZE := 157645
+BOARD_DTB_OFFSET := 0x01f00000
 BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION)
 BOARD_MKBOOTIMG_ARGS += --base $(BOARD_VENDOR_BASE)
 BOARD_MKBOOTIMG_ARGS += --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --kernel_offset $(BOARD_KERNEL_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_TAGS_OFFSET)
+BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
+BOARD_MKBOOTIMG_ARGS += --dtb_offset $(BOARD_DTB_OFFSET)
+BOARD_MKBOOTIMG_ARGS += --vendor_bootconfig $(BOARD_VENDOR_BOOTCONFIG)
 
 # Partitions (sizes from stock super metadata, MIO-KITCHEN config/parts_info)
 BOARD_SYSTEMIMAGE_PARTITION_TYPE := erofs
