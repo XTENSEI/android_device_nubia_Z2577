@@ -19,3 +19,14 @@ PRODUCT_PACKAGES += \
     android.hardware.health@2.1-impl \
     android.hardware.health@2.1-service \
     bootctrl.ums9230
+
+# Keymint / gatekeeper / keystore2 (FBE decrypt via trusty)
+PRODUCT_PACKAGES += \
+    android.hardware.gatekeeper \
+    android.hardware.security.keymint \
+    android.hardware.security.secureclock \
+    android.hardware.security.sharedsecret \
+    libkeymint \
+    libtrusty \
+    libgatekeeper \
+    android.system.keystore2
