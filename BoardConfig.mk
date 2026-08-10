@@ -78,7 +78,7 @@ BOARD_KERNEL_SEPARATED_DTBO := true
 # Kernel / vendor_boot (values from stock vendor_boot header, MIO-KITCHEN unpack)
 TARGET_NO_KERNEL := true
 BOARD_VENDOR_BASE := 0x00000000
-BOARD_VENDOR_CMDLINE := console=ttyS1,115200n8 bootconfig bootconfig
+BOARD_VENDOR_CMDLINE := 'console=ttyS1,115200n8 bootconfig bootconfig'
 BOARD_VENDOR_BOOTCONFIG := $(DEVICE_PATH)/bootconfig
 BOARD_PAGE_SIZE := 4096
 BOARD_KERNEL_OFFSET := 0x00008000
