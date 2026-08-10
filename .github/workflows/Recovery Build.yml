@@ -173,6 +173,12 @@ jobs:
       id: recoveryinstaller
       continue-on-error: true
 
+    - name: Apply Unisoc DRM fix (graphics_drm.cpp)
+      run: |
+        cp -f ${GITHUB_WORKSPACE}/patches/bootable/recovery/minuitwrp/graphics_drm.cpp bootable/recovery/minuitwrp/graphics_drm.cpp
+        grep -n "drmModeSetCrtc" bootable/recovery/minuitwrp/graphics_drm.cpp | head -3
+      working-directory: workspace
+
     - name: Building recovery (AOSP)
       if: steps.buildtree.outputs.value == 'aosp'
       run: |
