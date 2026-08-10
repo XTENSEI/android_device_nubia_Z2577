@@ -183,6 +183,13 @@ jobs:
         grep -n "drmModeSetCrtc" bootable/recovery/minuitwrp/graphics_drm.cpp | head -3
       working-directory: workspace
 
+    - name: Apply vold + partitionmanager fix (non-retrying boot HAL lookup)
+      run: |
+        cp -f ${GITHUB_WORKSPACE}/patches/system/vold/Checkpoint.cpp system/vold/Checkpoint.cpp
+        cp -f ${GITHUB_WORKSPACE}/patches/bootable/recovery/partitionmanager.cpp bootable/recovery/partitionmanager.cpp
+        grep -c 'getService("default", false)' system/vold/Checkpoint.cpp bootable/recovery/partitionmanager.cpp
+      working-directory: workspace
+
     - name: Building recovery (AOSP)
       if: steps.buildtree.outputs.value == 'aosp'
       run: |
