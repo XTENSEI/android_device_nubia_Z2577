@@ -73,6 +73,9 @@ TARGET_SCREEN_DENSITY := 320
 
 # Touch (stock vendor modules; zte_tpd depends on lcd_state_notify)
 TW_LOAD_VENDOR_MODULES := "lcd_state_notify.ko zte_tpd.ko"
+# Load them from the recovery ramdisk (/lib/modules) instead of relying on the
+# vendor_dlkm logical partition mount (inoi_a35 parity: ramdisk ships the modules)
+TW_LOAD_VENDOR_BOOT_MODULES := true
 BOARD_KERNEL_SEPARATED_DTBO := true
 
 # Kernel / vendor_boot (values from stock vendor_boot header, MIO-KITCHEN unpack)
