@@ -210,8 +210,6 @@ jobs:
         python3 ${GITHUB_WORKSPACE}/scripts/repack-vendor-boot.py \
           --stock stock_vendor_boot.img \
           --twrp ${{ inputs.BUILD_TARGET }}.img \
-          --dtb ${GITHUB_WORKSPACE}/prebuilt/dtb.img \
-          --bootconfig ${GITHUB_WORKSPACE}/bootconfig \
           --out vendor_boot-fixed.img
         ls -la vendor_boot-fixed.img
       working-directory: workspace
