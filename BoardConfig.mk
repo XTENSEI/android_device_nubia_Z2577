@@ -161,8 +161,8 @@ TW_INCLUDE_LPTOOLS := true
 TW_INCLUDE_AVBCTL := true
 TW_INCLUDE_ZSTD := true
 TW_BRIGHTNESS_PATH := "/sys/class/backlight/sprd_backlight/brightness"
-TW_MAX_BRIGHTNESS := 924
-TW_DEFAULT_BRIGHTNESS := 262
+TW_MAX_BRIGHTNESS := 255
+TW_DEFAULT_BRIGHTNESS := 200
 
 # Crypto / FBE decryption: trusty runs in recovery and the keymint TA answers, so
 # metadata-key unwrap works. vold patches make the boot HAL + keystore2 lookups
