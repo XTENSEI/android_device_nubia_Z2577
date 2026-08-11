@@ -178,10 +178,13 @@ jobs:
         grep -n "drmModeSetCrtc" bootable/recovery/minuitwrp/graphics_drm.cpp | head -3
       working-directory: workspace
 
-    - name: Apply partitionmanager fix (non-retrying boot HAL for slot ops)
+    - name: Apply vold + partitionmanager fixes (non-retrying boot HAL + bounded keystore2 wait)
       run: |
+        cp -f ${GITHUB_WORKSPACE}/patches/system/vold/Checkpoint.cpp system/vold/Checkpoint.cpp
+        cp -f ${GITHUB_WORKSPACE}/patches/system/vold/Keymaster.cpp system/vold/Keymaster.cpp
         cp -f ${GITHUB_WORKSPACE}/patches/bootable/recovery/partitionmanager.cpp bootable/recovery/partitionmanager.cpp
-        grep -c 'getService("default", false)' bootable/recovery/partitionmanager.cpp
+        grep -c 'getService("default", false)' system/vold/Checkpoint.cpp bootable/recovery/partitionmanager.cpp
+        grep -c 'checkService' system/vold/Keymaster.cpp
       working-directory: workspace
 
     - name: Building recovery (AOSP)
