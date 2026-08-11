@@ -181,6 +181,19 @@ on property:sys.usb.configfs=1 && property:sys.usb.ffs.ready=1 && property:sys.u
     write /config/usb_gadget/g1/UDC ${sys.usb.controller}
     setprop sys.usb.state ${sys.usb.config}
 
+on property:sys.usb.config=mtp,adb
+    start adbd
+
+# TWRP sets sys.usb.config=mtp,adb (from persist.sys.usb.config), but the ramdisk
+# init.rc has no action for it, so the UDC never gets bound and USB stays dead.
+# Mirror the stock adb action so mtp,adb also enables the adb gadget.
+on property:sys.usb.config=mtp,adb && property:sys.usb.ffs.ready=1 && property:sys.usb.configfs=1
+    write /config/usb_gadget/g1/idProduct 0xD001
+    write /config/usb_gadget/g1/configs/b.1/strings/0x409/configuration "adb"
+    symlink /config/usb_gadget/g1/functions/ffs.adb /config/usb_gadget/g1/configs/b.1/f1
+    write /config/usb_gadget/g1/UDC ${sys.usb.controller}
+    setprop sys.usb.state ${sys.usb.config}
+
 on property:sys.usb.configfs=1 && property:sys.usb.config=vser
     write /config/usb_gadget/g1/idVendor 0x1782
     write /config/usb_gadget/g1/idProduct 0x4d00
