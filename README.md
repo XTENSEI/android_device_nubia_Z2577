@@ -12,24 +12,65 @@ Team Win Recovery Project device tree for the Nubia V80 Max (Z2577).
 | Bootloader | unlocked, vendor_boot recovery |
 | Branch | `twrp-12.1` (minimal-manifest-twrp AOSP, TeamWin android-12.1) |
 
-## Status
+## Checks
 
-- [x] Skeleton, ramdisk files, prebuilts (dtb, bootconfig, vendor modules)
-- [x] Trusty FBE decryption stack (keymint/gatekeeper HALs from stock images)
-- [x] fastbootd / update_engine_sideload support (AIDL boot HALs)
-- [x] CI build workflow (mirrors Massatriof16/Action-Recovery-Builder)
-- [ ] First boot validation on device
+Status reflects `twrp-12.1` HEAD (ramdisk: TWRP 3.7.1_12). `[?]` = not yet
+verified on device.
 
-> **Note on decryption**: the shipped keymint HALs are Android-13+ (keymint
-> AIDL V2) interfaces. The twrp-12.1 manifest builds at API 32, where TWRP's
-> vold still uses keymaster HIDL — so FBE decrypt is best-effort on the
-> 12.1 manifest. Building with `MANIFEST_BRANCH=14.1` provides the
-> keymint-V2 NDK libs for the full decrypt path. Recovery boots either way.
+### Blocking checks
+
+- [x] Correct screen/recovery size (720x1640 @ 320, DRM graphics)
+- [x] Working touch, screen
+- [?] Backup to internal/microSD
+- [?] Restore from internal/microSD
+- [x] Reboot to system (BCB cleared via Android-format fstab + vendor fstab)
+- [x] ADB (gadget bound for `mtp,adb`; adb out of the box)
+
+### Medium checks
+
+- [x] update.zip sideload (RC=0 verified)
+- [x] UI colors (no inversion)
+- [x] Screen goes off and on (power → swipe-to-unlock; display does not fully blank)
+- [x] F2FS/EXT4 support (metadata f2fs, cache ext4); exFAT/NTFS [?]
+- [x] All important partitions listed in mount/backup lists (system, vendor,
+      product, odm, dlkms, boot, etc.)
+- [?] Backup/restore to/from external storage
+- [?] Backup/restore to/from adb
+- [ ] Decrypt /data — metadata FBE. keymint TA confirmed alive in recovery
+      (trusty v2.1.1, `com.android.trusty.keymaster` answers); decrypt build in
+      flight. gatekeeper TA absent, not needed for DE-key unwrap.
+- [x] Correct date
+
+### Minor checks
+
+- [ ] MTP export (adb-only gadget for now)
+- [?] Reboot to bootloader
+- [x] Reboot to recovery
+- [?] Poweroff
+- [x] Battery level (healthd)
+- [x] Temperature (healthd)
+- [ ] Encrypted backups (`TW_EXCLUDE_ENCRYPTED_BACKUPS`)
+- [?] Input devices via USB OTG (keyboard/mouse/storage)
+- [ ] USB mass storage export (no `mass_storage.0` lun)
+- [x] Set brightness (`/sys/class/backlight/sprd_backlight`)
+- [ ] Vibrate (no `timed_output/vibrator` node)
+- [?] Screenshot
+- [?] Partition SD card
+- [x] Fastbootd (`TW_INCLUDE_FASTBOOTD`)
+
+> **Known limitations:** `/data` decrypt needs the keymint TA reachable at the
+> moment TWRP tries — the shipped vold patches keep the boot-HAL and keystore2
+> lookups non-blocking so a slow TA fails fast to the UI instead of hanging.
+> The trusty keymint/gatekeeper HALs are Android-13+ (keymint AIDL V2); the
+> twrp-12.1 manifest builds at API 32 where TWRP's vold uses keymaster HIDL, so
+> the stack ships as in-tree prebuilts (kl4/A666LN-proven, byte-identical
+> ums9230 blobs).
 
 ## Build
 
 Dispatch the **Recovery Build** workflow from the Actions tab
-(`workflow_dispatch`), or build manually:
+(`workflow_dispatch`), build on a VPS with `./build-local.sh` (no sudo
+needed), or build manually:
 
 ```bash
 repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
