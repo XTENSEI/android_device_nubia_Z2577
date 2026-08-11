@@ -164,6 +164,11 @@ TW_BRIGHTNESS_PATH := "/sys/class/backlight/sprd_backlight/brightness"
 TW_MAX_BRIGHTNESS := 255
 TW_DEFAULT_BRIGHTNESS := 200
 
+# Punch-hole camera is centered in the status bar; keep icons off it (kl4 values)
+TW_CUSTOM_CPU_POS := "300"
+TW_CUSTOM_CLOCK_POS := "70"
+TW_CUSTOM_BATTERY_POS := "790"
+
 # Crypto / FBE decryption: trusty runs in recovery and the keymint TA answers, so
 # metadata-key unwrap works. vold patches make the boot HAL + keystore2 lookups
 # non-blocking so a slow TA can't hang the splash.
