@@ -14,6 +14,7 @@ JOBS="${JOBS:-$(nproc --all)}"
 
 [[ "${1:-}" == "--clean" ]] && rm -rf workspace
 mkdir -p workspace && cd workspace
+WORKSPACE="$PWD"
 
 if ! command -v repo >/dev/null 2>&1; then
     mkdir -p "$HOME/bin"
@@ -42,10 +43,11 @@ else
 fi
 
 # apply all source patches (structure mirrors repo paths)
-cd "$DEVICE_PATH/patches" && find . -type f -print0 | xargs -0 cp -f --parents -t "$OLDPWD"
+cd "$DEVICE_PATH/patches" && find . -type f -print0 | xargs -0 cp -f --parents -t "$WORKSPACE"
+cd "$WORKSPACE"
 
 if command -v ccache >/dev/null 2>&1; then
-    export CCACHE_DIR="$PWD/.ccache" USE_CCACHE=1 CCACHE_EXEC="$(command -v ccache)"
+    export CCACHE_DIR="$WORKSPACE/.ccache" USE_CCACHE=1 CCACHE_EXEC="$(command -v ccache)"
     ccache -M 50G >/dev/null 2>&1 || true
 fi
 
