@@ -58,14 +58,6 @@ verified on device.
 - [?] Partition SD card
 - [x] Fastbootd (`TW_INCLUDE_FASTBOOTD`)
 
-> **Known limitations:** `/data` decrypt needs the keymint TA reachable at the
-> moment TWRP tries — the shipped vold patches keep the boot-HAL and keystore2
-> lookups non-blocking so a slow TA fails fast to the UI instead of hanging.
-> The trusty keymint/gatekeeper HALs are Android-13+ (keymint AIDL V2); the
-> twrp-12.1 manifest builds at API 32 where TWRP's vold uses keymaster HIDL, so
-> the stack ships as in-tree prebuilts (kl4/A666LN-proven, byte-identical
-> ums9230 blobs).
-
 ## Build
 
 Dispatch the **Recovery Build** workflow from the Actions tab
