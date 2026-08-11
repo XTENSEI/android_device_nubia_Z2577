@@ -55,5 +55,4 @@ system_dlkm                      /system_dlkm  erofs  ro                wait,slo
 
 # Misc mounts
 /dev/block/by-name/cache         /cache        ext4   defaults          wait,check
-/dev/block/by-name/prodnv        /mnt/vendor   ext4   defaults          defaults
 /dev/block/mmcblk1p1             /storage/sdcard0 vfat defaults          defaults
