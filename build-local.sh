@@ -45,6 +45,11 @@ fi
 # apply all source patches (structure mirrors repo paths)
 cd "$DEVICE_PATH/patches" && find . -type f -print0 | xargs -0 cp -f --parents -t "$WORKSPACE"
 cd "$WORKSPACE"
+# fail loudly if a patch did not land (mirrors CI grep checks)
+grep -q 'getService("default", false)' system/vold/Checkpoint.cpp
+[ "$(grep -c checkService system/vold/Keymaster.cpp)" -ge 1 ]
+grep -q 'getService("default", false)' bootable/recovery/partitionmanager.cpp
+echo "patches verified"
 
 if command -v ccache >/dev/null 2>&1; then
     export CCACHE_DIR="$WORKSPACE/.ccache" USE_CCACHE=1 CCACHE_EXEC="$(command -v ccache)"
