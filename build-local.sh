@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Local TWRP build for Z2577 (no sudo). Usage: ./build-local.sh [--clean]
 # Output: workspace/out/target/product/Z2577/vendor_boot.img
-set -euo pipefail
+set -eo pipefail # no -u: AOSP envsetup.sh reads unset vars (TOP, ZSH_VERSION)
 
 MANIFEST_URL="https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp"
 MANIFEST_BRANCH="twrp-12.1"
