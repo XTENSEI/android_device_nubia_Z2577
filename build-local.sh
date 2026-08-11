@@ -41,8 +41,8 @@ else
     git -C "$DEVICE_PATH" fetch origin "$DEVICE_TREE_BRANCH" && git -C "$DEVICE_PATH" checkout FETCH_HEAD
 fi
 
-cp -f "$DEVICE_PATH/patches/bootable/recovery/minuitwrp/graphics_drm.cpp" bootable/recovery/minuitwrp/graphics_drm.cpp
-cp -f "$DEVICE_PATH/patches/bootable/recovery/partitionmanager.cpp" bootable/recovery/partitionmanager.cpp
+# apply all source patches (structure mirrors repo paths)
+cd "$DEVICE_PATH/patches" && find . -type f -print0 | xargs -0 cp -f --parents -t "$OLDPWD"
 
 if command -v ccache >/dev/null 2>&1; then
     export CCACHE_DIR="$PWD/.ccache" USE_CCACHE=1 CCACHE_EXEC="$(command -v ccache)"
