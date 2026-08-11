@@ -164,9 +164,11 @@ TW_BRIGHTNESS_PATH := "/sys/class/backlight/sprd_backlight/brightness"
 TW_MAX_BRIGHTNESS := 924
 TW_DEFAULT_BRIGHTNESS := 262
 
-# Crypto / FBE decryption (trusty keymint/gatekeeper HALs from stock)
-TW_INCLUDE_CRYPTO := true
-TW_INCLUDE_CRYPTO_FBE := true
+# Crypto / FBE decryption disabled like Massatriof P671L: startup decrypt needs the
+# trusty keymint/gatekeeper TAs, which don't run in this recovery ramdisk (tipc err=110).
+# Attempting decrypt at boot only hangs TWRP on the splash. Re-enable when trusty works.
+# TW_INCLUDE_CRYPTO := true
+# TW_INCLUDE_CRYPTO_FBE := true
 BOARD_USES_METADATA_PARTITION := true
 TW_USE_FSCRYPT_POLICY := 2
 TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
