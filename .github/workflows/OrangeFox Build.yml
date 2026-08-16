@@ -85,8 +85,8 @@ jobs:
         source build/envsetup.sh
         export ALLOW_MISSING_DEPENDENCIES=true
         export FOX_BUILD_DEVICE=${{ inputs.DEVICE_NAME }}
-        lunch twrp_${{ inputs.DEVICE_NAME }}-trunk_staging-eng
-        make $(tr -d _ <<< ${{ inputs.BUILD_TARGET }})image -j$(nproc --all)
+        lunch twrp_${{ inputs.DEVICE_NAME }}-ap2a-eng
+        mka adbd $(tr -d _ <<< ${{ inputs.BUILD_TARGET }})image
       working-directory: workspace
 
     - name: Upload build artifacts
