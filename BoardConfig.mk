@@ -168,9 +168,9 @@ TW_CUSTOM_CPU_POS := "300"
 TW_CUSTOM_CLOCK_POS := "70"
 TW_CUSTOM_BATTERY_POS := "790"
 
-# Crypto / FBE decryption (trusty keymint TA; vold patches keep lookups non-blocking)
-TW_INCLUDE_CRYPTO := true
-TW_INCLUDE_CRYPTO_FBE := true
+# Crypto off: TWRP 12.1 cannot decrypt Android 16
+TW_INCLUDE_CRYPTO := false
+TW_INCLUDE_CRYPTO_FBE := false
 BOARD_USES_METADATA_PARTITION := true
 TW_USE_FSCRYPT_POLICY := 2
 TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
