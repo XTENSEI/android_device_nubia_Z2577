@@ -8,4 +8,4 @@ PRODUCT_MAKEFILES := \
     $(LOCAL_DIR)/twrp_Z2577.mk
 
 COMMON_LUNCH_CHOICES := \
-    twrp_Z2577-eng
+    twrp_Z2577-trunk_staging-eng

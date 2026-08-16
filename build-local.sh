@@ -54,5 +54,5 @@ fi
 source build/envsetup.sh
 export ALLOW_MISSING_DEPENDENCIES=true
 export FOX_BUILD_DEVICE="$DEVICE_NAME"
-lunch "twrp_${DEVICE_NAME}-eng"
+lunch "twrp_${DEVICE_NAME}-trunk_staging-eng"
 make "$(tr -d _ <<< "$BUILD_TARGET")image" -j"$JOBS"
