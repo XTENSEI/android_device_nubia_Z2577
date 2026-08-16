@@ -1,0 +1,115 @@
+name: OrangeFox Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      DEVICE_TREE_URL:
+        description: Device Tree URL
+        required: true
+        default: https://github.com/XTENSEI/android_device_nubia_Z2577
+      DEVICE_TREE_BRANCH:
+        description: Device Tree Branch
+        required: true
+        default: fox_14.1
+      DEVICE_PATH:
+        description: Path the device tree should be synced to, relative to source root
+        required: true
+        default: device/nubia/Z2577
+      DEVICE_NAME:
+        description: Device Name from tree (should match name on twrp_<DEVICE_NAME>.mk)
+        required: true
+        default: Z2577
+      BUILD_TARGET:
+        description: Partition containing recovery ramdisk
+        type: choice
+        options:
+        - boot
+        - recovery
+        - vendor_boot
+        required: true
+        default: vendor_boot
+jobs:
+  build:
+    if: github.event.repository.owner.id == github.event.sender.id
+    runs-on: ubuntu-22.04
+    steps:
+    - name: Display Run Parameters
+      run: |
+        echo "::group::User Environment Variables"
+        echo "Device Tree URL: ${{ inputs.DEVICE_TREE_URL }}"
+        echo "Device Tree Branch: ${{ inputs.DEVICE_TREE_BRANCH }}"
+        echo "Device Path: ${{ inputs.DEVICE_PATH }}"
+        echo "Device Name: ${{ inputs.DEVICE_NAME }}"
+        echo "Build Target: ${{ inputs.BUILD_TARGET }}.img"
+        echo "::endgroup::"
+
+    - name: Check Out
+      uses: actions/checkout@v4
+
+    - name: Cleanup
+      uses: rokibhasansagar/slimhub_actions@main
+
+    - name: Set Swap Space
+      uses: pierotofy/set-swap-space@master
+      with:
+        swap-size-gb: 8
+
+    - name: Prepare the environment
+      run: |
+        sudo apt -y install gperf gcc-multilib gcc-10-multilib g++-multilib g++-10-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libwxgtk3.0-gtk3-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev libtinfo5
+        sudo add-apt-repository universe
+        sudo apt -y install libncurses5
+
+    - name: Install repo
+      run: |
+        mkdir ~/bin
+        curl https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+        chmod a+x ~/bin/repo
+        sudo ln -sf ~/bin/repo /usr/bin/repo
+
+    - name: Set up OrangeFox fox_14.1 sources
+      run: |
+        git config --global user.name "${GITHUB_ACTOR}"
+        git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
+        git clone https://gitlab.com/OrangeFox/sync /tmp/ofox-sync
+        cd /tmp/ofox-sync
+        ./orangefox_sync.sh -b 14.1 -p ${GITHUB_WORKSPACE}/workspace
+
+    - name: Clone device tree
+      run: |
+        cd workspace
+        git clone -b ${{ inputs.DEVICE_TREE_BRANCH }} ${{ inputs.DEVICE_TREE_URL }} ${{ inputs.DEVICE_PATH }}
+
+    - name: Building OrangeFox
+      run: |
+        source build/envsetup.sh
+        export ALLOW_MISSING_DEPENDENCIES=true
+        export FOX_BUILD_DEVICE=${{ inputs.DEVICE_NAME }}
+        lunch twrp_${{ inputs.DEVICE_NAME }}-eng
+        make $(tr -d _ <<< ${{ inputs.BUILD_TARGET }})image -j$(nproc --all)
+      working-directory: workspace
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ofox-${{ inputs.BUILD_TARGET }}
+        path: |
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/${{ inputs.BUILD_TARGET }}.img
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/obj/PACKAGING/vendor_ramdisk_fragments_intermediates/recovery.*
+        if-no-files-found: warn
+
+    - name: Upload to Release
+      uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
+      with:
+        files: |
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/${{ inputs.BUILD_TARGET }}.img
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/obj/PACKAGING/vendor_ramdisk_fragments_intermediates/recovery.*
+        name: ${{ inputs.DEVICE_NAME }} (OrangeFox)
+        tag_name: ${{ github.run_id }}
+        body: |
+          Manifest: fox_14.1
+          Target: ${{ inputs.BUILD_TARGET }}.img
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
