@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-# Local TWRP build for Z2577 (no sudo). Usage: ./build-local.sh [--clean]
+# Local OrangeFox 14.1 build for Z2577 (no sudo). Usage: ./build-local.sh [--clean]
 # Output: workspace/out/target/product/Z2577/vendor_boot.img
 set -eo pipefail # no -u: AOSP envsetup.sh reads unset vars (TOP, ZSH_VERSION)
 
-MANIFEST_URL="https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp"
-MANIFEST_BRANCH="twrp-12.1"
+FOX_BRANCH="14.1"
 DEVICE_TREE_URL="https://github.com/XTENSEI/android_device_nubia_Z2577"
-DEVICE_TREE_BRANCH="twrp-12.1"
+DEVICE_TREE_BRANCH="fox_14.1"
 DEVICE_PATH="device/nubia/Z2577"
 DEVICE_NAME="Z2577"
 BUILD_TARGET="vendor_boot"
@@ -32,8 +31,13 @@ if ! java -version 2>&1 | grep -q 'version "11'; then
     export JAVA_HOME="$HOME/jdk11" PATH="$HOME/jdk11/bin:$PATH"
 fi
 
-[[ ! -d .repo ]] && repo init --depth=1 -u "$MANIFEST_URL" -b "$MANIFEST_BRANCH"
-[[ ! -d .repo/projects ]] && repo sync -j"$JOBS" --force-sync
+# OrangeFox source setup (repo init + sync + patches), via the official sync script
+if [[ ! -d .repo ]]; then
+    rm -rf /tmp/ofox-sync && git clone https://gitlab.com/OrangeFox/sync /tmp/ofox-sync
+    cd /tmp/ofox-sync
+    ./orangefox_sync.sh -b "$FOX_BRANCH" -p "$WORKSPACE"
+    cd "$WORKSPACE"
+fi
 
 mkdir -p "$(dirname "$DEVICE_PATH")"
 if [[ ! -d "$DEVICE_PATH" ]]; then
@@ -42,15 +46,6 @@ else
     git -C "$DEVICE_PATH" fetch origin "$DEVICE_TREE_BRANCH" && git -C "$DEVICE_PATH" checkout FETCH_HEAD
 fi
 
-# apply all source patches (structure mirrors repo paths)
-cd "$DEVICE_PATH/patches" && find . -type f -print0 | xargs -0 cp -f --parents -t "$WORKSPACE"
-cd "$WORKSPACE"
-# fail loudly if a patch did not land (mirrors CI grep checks)
-grep -q 'getService("default", false)' system/vold/Checkpoint.cpp
-[ "$(grep -c checkService system/vold/Keymaster.cpp)" -ge 1 ]
-grep -q 'getService("default", false)' bootable/recovery/partitionmanager.cpp
-echo "patches verified"
-
 if command -v ccache >/dev/null 2>&1; then
     export CCACHE_DIR="$WORKSPACE/.ccache" USE_CCACHE=1 CCACHE_EXEC="$(command -v ccache)"
     ccache -M 50G >/dev/null 2>&1 || true
@@ -58,5 +53,6 @@ fi
 
 source build/envsetup.sh
 export ALLOW_MISSING_DEPENDENCIES=true
+export FOX_BUILD_DEVICE="$DEVICE_NAME"
 lunch "twrp_${DEVICE_NAME}-eng"
 make "$(tr -d _ <<< "$BUILD_TARGET")image" -j"$JOBS"
