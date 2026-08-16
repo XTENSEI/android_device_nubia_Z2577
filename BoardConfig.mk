@@ -33,7 +33,7 @@ AB_OTA_PARTITIONS += \
 TARGET_SCREEN_HEIGHT := 1640
 TARGET_SCREEN_WIDTH := 720
 
-# vendor_boot configuration (recovery lives inside the vendor_boot ramdisk)
+# vendor_boot configuration
 TARGET_NO_RECOVERY := true
 BOARD_BOOT_HEADER_VERSION := 4
 BOARD_USES_GENERIC_KERNEL_IMAGE := true
@@ -68,17 +68,16 @@ TARGET_2ND_CPU_VARIANT_RUNTIME := cortex-a55
 TARGET_BOOTLOADER_BOARD_NAME := Z2577
 TARGET_NO_BOOTLOADER := true
 
-# Display (720x1640 from stock dtb panel-max-x=0x2cf/panel-max-y=0x667; density 320 from ro.sf.lcd_density=320)
+# Display
 TARGET_SCREEN_DENSITY := 320
 
-# Touch (stock vendor modules; zte_tpd depends on lcd_state_notify)
+# Touch
 TW_LOAD_VENDOR_MODULES := "lcd_state_notify.ko zte_tpd.ko"
-# Load them from the recovery ramdisk (/lib/modules) instead of relying on the
-# vendor_dlkm logical partition mount (inoi_a35 parity: ramdisk ships the modules)
+# Load from recovery ramdisk, not vendor_dlkm
 TW_LOAD_VENDOR_BOOT_MODULES := true
 BOARD_KERNEL_SEPARATED_DTBO := true
 
-# Kernel / vendor_boot (values from stock vendor_boot header, MIO-KITCHEN unpack)
+# Kernel / vendor_boot
 TARGET_NO_KERNEL := true
 BOARD_VENDOR_BASE := 0x00000000
 BOARD_VENDOR_CMDLINE := 'console=ttyS1,115200n8 bootconfig bootconfig'
@@ -102,16 +101,16 @@ BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB)
 BOARD_MKBOOTIMG_ARGS += --dtb_offset $(BOARD_DTB_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --vendor_bootconfig $(BOARD_VENDOR_BOOTCONFIG)
 
-# Partitions (sizes from stock super metadata, MIO-KITCHEN config/parts_info)
+# Partitions
 BOARD_SYSTEMIMAGE_PARTITION_TYPE := erofs
 BOARD_VENDORIMAGE_FILE_SYSTEM_TYPE := erofs
 BOARD_USERDATAIMAGE_FILE_SYSTEM_TYPE := f2fs
 TARGET_USERIMAGES_USE_EXT4 := true
 TARGET_USERIMAGES_USE_F2FS := true
-BOARD_FLASH_BLOCK_SIZE := 262144 # (BOARD_KERNEL_PAGESIZE * 64)
+BOARD_FLASH_BLOCK_SIZE := 262144
 BOARD_HAS_LARGE_FILESYSTEM := true
 TARGET_COPY_OUT_VENDOR := vendor
-BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 104857600 # 100 MiB, stock vendor_boot
+BOARD_VENDOR_BOOTIMAGE_PARTITION_SIZE := 104857600
 
 BOARD_SUPER_PARTITION_SIZE := 13690208256
 BOARD_SUPER_PARTITION_GROUPS := group_unisoc_a
@@ -122,7 +121,7 @@ TARGET_RECOVERY_PIXEL_FORMAT := RGBX_8888
 TARGET_RECOVERY_FSTAB := $(DEVICE_PATH)/recovery.fstab
 TARGET_SYSTEM_PROP += $(DEVICE_PATH)/system.prop
 
-# Verified Boot (device is unlocked; recovery uses avb test keys)
+# Verified Boot
 BOARD_AVB_ENABLE := true
 BOARD_AVB_RECOVERY_ALGORITHM := SHA256_RSA4096
 BOARD_AVB_RECOVERY_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
@@ -131,19 +130,19 @@ BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 4
 
 BOARD_SUPPRESS_SECURE_ERASE := true
 
-# Anti-rollback hack (reference trees use 2099 + PLATFORM_VERSION 16.1.0)
+# Anti-rollback
 PLATFORM_SECURITY_PATCH := 2099-12-31
 VENDOR_SECURITY_PATCH := 2099-12-31
 PLATFORM_VERSION := 16.1.0
 PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
 
-# Sign vendor_boot with avb test key (device unlocked; P671L pattern)
+# Sign vendor_boot with avb test key
 BOARD_AVB_VENDOR_BOOT_KEY_PATH := external/avb/test/data/testkey_rsa4096.pem
 BOARD_AVB_VENDOR_BOOT_ALGORITHM := SHA256_RSA4096
 BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX := $(PLATFORM_SECURITY_PATCH_TIMESTAMP)
 BOARD_AVB_VENDOR_BOOT_ROLLBACK_INDEX_LOCATION := 1
 
-# TWRP configuration (P671L booted + kl4 decrypt references)
+# TWRP configuration
 TW_INCLUDE_FASTBOOTD := true
 TW_THEME := portrait_hdpi
 TW_NO_SCREEN_BLANK_ON_BOOT := true
@@ -164,14 +163,12 @@ TW_BRIGHTNESS_PATH := "/sys/class/backlight/sprd_backlight/brightness"
 TW_MAX_BRIGHTNESS := 255
 TW_DEFAULT_BRIGHTNESS := 200
 
-# Punch-hole camera is centered in the status bar; keep icons off it (kl4 values)
+# Status bar icons off the punch-hole camera (kl4 values)
 TW_CUSTOM_CPU_POS := "300"
 TW_CUSTOM_CLOCK_POS := "70"
 TW_CUSTOM_BATTERY_POS := "790"
 
-# Crypto / FBE decryption: trusty runs in recovery and the keymint TA answers, so
-# metadata-key unwrap works. vold patches make the boot HAL + keystore2 lookups
-# non-blocking so a slow TA can't hang the splash.
+# Crypto / FBE decryption (trusty keymint TA; vold patches keep lookups non-blocking)
 TW_INCLUDE_CRYPTO := true
 TW_INCLUDE_CRYPTO_FBE := true
 BOARD_USES_METADATA_PARTITION := true
