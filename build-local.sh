@@ -46,6 +46,9 @@ else
     git -C "$DEVICE_PATH" fetch origin "$DEVICE_TREE_BRANCH" && git -C "$DEVICE_PATH" checkout FETCH_HEAD
 fi
 
+# cts platform_releases.txt predates the ap2a release config (PLATFORM_VERSION_LAST_STABLE=16.1.0)
+grep -q '^16\.1\.0$' cts/tests/tests/os/assets/platform_releases.txt || echo '16.1.0' >> cts/tests/tests/os/assets/platform_releases.txt
+
 if command -v ccache >/dev/null 2>&1; then
     export CCACHE_DIR="$WORKSPACE/.ccache" USE_CCACHE=1 CCACHE_EXEC="$(command -v ccache)"
     ccache -M 50G >/dev/null 2>&1 || true
