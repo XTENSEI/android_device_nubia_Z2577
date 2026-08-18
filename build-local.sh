@@ -46,9 +46,13 @@ else
     git -C "$DEVICE_PATH" fetch origin "$DEVICE_TREE_BRANCH" && git -C "$DEVICE_PATH" checkout FETCH_HEAD
 fi
 
-# Apply device patches (legacy DRM modeset - sprd rejects atomic commits)
-cp -f "$DEVICE_PATH/patches/bootable/recovery/minuitwrp/graphics_drm.cpp" \
-      bootable/recovery/minuitwrp/graphics_drm.cpp
+# apply all source patches (structure mirrors repo paths)
+cd "$DEVICE_PATH/patches" && find . -type f -print0 | xargs -0 cp -f --parents -t "$WORKSPACE"
+cd "$WORKSPACE"
+# fail loudly if a patch did not land (mirrors CI grep checks)
+grep -q 'drmModePageFlip' bootable/recovery/minuitwrp/graphics_drm.cpp
+grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
+echo "patches verified"
 
 # cts platform_releases.txt predates the ap2a release config (PLATFORM_VERSION_LAST_STABLE=16.1.0)
 grep -q '^16\.1\.0$' cts/tests/tests/os/assets/platform_releases.txt || echo '16.1.0' >> cts/tests/tests/os/assets/platform_releases.txt
