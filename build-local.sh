@@ -46,6 +46,10 @@ else
     git -C "$DEVICE_PATH" fetch origin "$DEVICE_TREE_BRANCH" && git -C "$DEVICE_PATH" checkout FETCH_HEAD
 fi
 
+# Apply device patches (legacy DRM modeset - sprd rejects atomic commits)
+cp -f "$DEVICE_PATH/patches/bootable/recovery/minuitwrp/graphics_drm.cpp" \
+      bootable/recovery/minuitwrp/graphics_drm.cpp
+
 # cts platform_releases.txt predates the ap2a release config (PLATFORM_VERSION_LAST_STABLE=16.1.0)
 grep -q '^16\.1\.0$' cts/tests/tests/os/assets/platform_releases.txt || echo '16.1.0' >> cts/tests/tests/os/assets/platform_releases.txt
 
