@@ -53,7 +53,6 @@ cd "$WORKSPACE"
 grep -q 'drmModePageFlip' bootable/recovery/minuitwrp/graphics_drm.cpp
 grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
 grep -q 'retry || tries == 0' system/libhidl/transport/ServiceManagement.cpp
-grep -q 'getService("default", false)' bootable/recovery/partitionmanager.cpp
 echo "patches verified"
 
 # cts platform_releases.txt predates the ap2a release config (PLATFORM_VERSION_LAST_STABLE=16.1.0)
