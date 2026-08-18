@@ -82,8 +82,11 @@ jobs:
 
     - name: Apply device patches
       run: |
-        cd workspace
-        cp -f ${{ inputs.DEVICE_PATH }}/patches/bootable/recovery/minuitwrp/graphics_drm.cpp bootable/recovery/minuitwrp/graphics_drm.cpp
+        cd workspace/${{ inputs.DEVICE_PATH }}/patches
+        find . -type f -print0 | xargs -0 cp -f --parents -t $GITHUB_WORKSPACE/workspace
+        cd $GITHUB_WORKSPACE/workspace
+        grep -q 'drmModePageFlip' bootable/recovery/minuitwrp/graphics_drm.cpp
+        grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
 
     - name: Fix CTS release version check
       run: |
