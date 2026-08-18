@@ -80,6 +80,11 @@ jobs:
         cd workspace
         git clone -b ${{ inputs.DEVICE_TREE_BRANCH }} ${{ inputs.DEVICE_TREE_URL }} ${{ inputs.DEVICE_PATH }}
 
+    - name: Apply device patches
+      run: |
+        cd workspace
+        cp -f ${{ inputs.DEVICE_PATH }}/patches/bootable/recovery/minuitwrp/graphics_drm.cpp bootable/recovery/minuitwrp/graphics_drm.cpp
+
     - name: Fix CTS release version check
       run: |
         cd workspace
