@@ -87,6 +87,8 @@ jobs:
         cd $GITHUB_WORKSPACE/workspace
         grep -q 'drmModePageFlip' bootable/recovery/minuitwrp/graphics_drm.cpp
         grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
+        grep -q 'retry || tries == 0' system/libhidl/transport/ServiceManagement.cpp
+        grep -q 'getService("default", false)' bootable/recovery/partitionmanager.cpp
 
     - name: Fix CTS release version check
       run: |
