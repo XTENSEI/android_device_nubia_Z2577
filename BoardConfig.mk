@@ -175,6 +175,11 @@ BOARD_USES_METADATA_PARTITION := true
 TW_USE_FSCRYPT_POLICY := 2
 TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
     $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper@1.0 \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.gatekeeper-V1-ndk \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.keymint-V3-ndk \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.secureclock-V1-ndk \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.hardware.security.sharedsecret-V1-ndk \
+    $(TARGET_OUT_SHARED_LIBRARIES)/android.system.keystore2-V4-ndk \
     $(TARGET_OUT_SHARED_LIBRARIES)/lib_android_keymaster_keymint_utils \
     $(TARGET_OUT_SHARED_LIBRARIES)/libcppbor_external \
     $(TARGET_OUT_SHARED_LIBRARIES)/libcppcose_rkp \
