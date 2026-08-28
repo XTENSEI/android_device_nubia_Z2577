@@ -2,6 +2,7 @@
 import /init.recovery.common.rc
 
 # FBE decryption via trusty (keymint 2.0 + gatekeeper 1.0, stock prebuilts)
+# Services start ONLY after trusty modules load (vendor.sys.listener.registered=true)
 on fs
     start prepdecrypt
 
@@ -19,17 +20,21 @@ service keystore2 /system/bin/keystore2 /data/misc/keystore
     seclabel u:r:recovery:s0
 
 service keymint-2-0 /system/bin/android.hardware.security.keymint@2.0-unisoc.service.trusty
+    interface aidl android.hardware.security.keymint.IKeyMintDevice/default
     user root
     group root drmrpc
     disabled
     seclabel u:r:recovery:s0
 
 service gatekeeper-1-0 /system/bin/android.hardware.gatekeeper@1.0-service.trusty
+    interface hidl android.hardware.gatekeeper@1.0::IGatekeeper default
     user root
     group root
     disabled
     seclabel u:r:recovery:s0
 
+# Trusty modules load late (TW_LOAD_VENDOR_BOOT_MODULES). Don't start
+# keymint/gatekeeper until the trusty IPC driver is registered.
 on property:vendor.sys.listener.registered=true
     start keymint-2-0
     start gatekeeper-1-0
@@ -47,6 +52,4 @@ on property:ro.crypto.state=unsupported || property:ro.crypto.state=unencrypted 
     stop gatekeeper-1-0
 
 on boot
-    start keymint-2-0
-    start gatekeeper-1-0
     start health-hal-2-1
