@@ -44,13 +44,25 @@ PRODUCT_PACKAGES += \
     android.hardware.health@2.1-service \
     bootctrl.ums9230
 
-# Keymint / gatekeeper / keystore2 (FBE decrypt via trusty)
+# Security (AIDL NDK packages for A16 keymint decrypt)
 PRODUCT_PACKAGES += \
-    android.hardware.gatekeeper \
-    android.hardware.security.keymint \
-    android.hardware.security.secureclock \
-    android.hardware.security.sharedsecret \
+    android.hardware.security.secureclock-V1-ndk \
+    android.hardware.security.sharedsecret-V1-ndk
+
+# Gatekeeper (HIDL V1 — stock Unisoc gatekeeper@1.0-service.trusty)
+PRODUCT_PACKAGES += \
+    android.hardware.gatekeeper-V1-ndk
+
+# Keymint (AIDL V2 — stock keymint@2.0-unisoc.service.trusty)
+PRODUCT_PACKAGES += \
+    android.hardware.security.keymint-V3-ndk
+
+# Keystore2
+PRODUCT_PACKAGES += \
+    android.system.keystore2
+
+# Trusty TEE libs (Unisoc secure world IPC)
+PRODUCT_PACKAGES += \
     libkeymint \
     libtrusty \
-    libgatekeeper \
-    android.system.keystore2
+    libgatekeeper
