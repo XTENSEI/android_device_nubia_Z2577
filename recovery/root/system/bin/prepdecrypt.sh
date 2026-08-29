@@ -1,27 +1,19 @@
 #!/sbin/sh
-# prepdecrypt.sh — signal crypto readiness after trusty modules load
-#
-# The keymint/gatekeeper HALs depend on the trusty IPC kernel modules
-# (trusty.ko, trusty-ipc.ko) which TWRP loads via TW_LOAD_VENDOR_BOOT_MODULES.
-# We wait for /dev/trusty-ipc* nodes to appear, then signal crypto.ready.
+LOG=/tmp/prepdecrypt.log
+exec > "$LOG" 2>&1
 
-TIMEOUT=30
-WAITED=0
+echo "=== prepdecrypt: services started by init, checking trusty ==="
+TRUSTY_COUNT=$(ls /dev/trusty-ipc* 2>/dev/null | wc -l)
+echo "trusty-ipc nodes: $TRUSTY_COUNT"
 
-# Wait for trusty IPC device nodes (created when trusty-ipc.ko loads)
-while [ $WAITED -lt $TIMEOUT ]; do
-    if ls /dev/trusty-ipc* 2>/dev/null | grep -q .; then
+for i in $(seq 1 15); do
+    TRUSTY_COUNT=$(ls /dev/trusty-ipc* 2>/dev/null | wc -l)
+    if [ "$TRUSTY_COUNT" -gt 0 ]; then
+        echo "trusty ready after ${i}s"
         break
     fi
     sleep 1
-    WAITED=$((WAITED + 1))
 done
 
-if [ $WAITED -ge $TIMEOUT ]; then
-    # Even without trusty devices, signal ready so vold can attempt
-    # a fast fail rather than hanging forever.
-    echo "prepdecrypt: trusty devices not found after ${TIMEOUT}s, signaling anyway" > /dev/kmsg
-fi
-
-# Signal init to start keymint + gatekeeper services
-setprop crypto.ready 1
+echo "crypto.ready property: $(getprop crypto.ready)"
+echo "=== prepdecrypt: done ==="
