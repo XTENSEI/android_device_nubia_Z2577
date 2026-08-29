@@ -16,7 +16,7 @@ on:
         required: true
         default: device/nubia/Z2577
       DEVICE_NAME:
-        description: Device Name from tree (should match name on twrp_<DEVICE_NAME>.mk)
+        description: Device Name from tree (should match name on twrp_DEVICE_NAME.mk)
         required: true
         default: Z2577
       BUILD_TARGET:
@@ -139,37 +139,24 @@ jobs:
         id: meta
         run: |
           RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          START=$(date -d "${{ github.event.workflow_run.created_at || github.event.repository.updated_at }}" +%s 2>/dev/null || echo 0)
-          NOW=$(date +%s)
-          ELAPSED=$(( NOW - START ))
-          MINS=$(( ELAPSED / 60 ))
-          SECS=$(( ELAPSED % 60 ))
-          DURATION="${MINS}m ${SECS}s"
-
           CONCLUSION="${{ needs.build.result }}"
           if [ "$CONCLUSION" = "success" ]; then
-            STATUS="✅ Passed"
+            STATUS="Passed"
           elif [ "$CONCLUSION" = "failure" ]; then
-            STATUS="❌ Failed"
+            STATUS="Failed"
           elif [ "$CONCLUSION" = "cancelled" ]; then
-            STATUS="⚠️ Cancelled"
+            STATUS="Cancelled"
           else
-            STATUS="⚠️ $CONCLUSION"
+            STATUS="$CONCLUSION"
           fi
-
-          echo "duration=$DURATION" >> "$GITHUB_OUTPUT"
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
           echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
 
       - name: Get device tree commit
         id: dtree_commit
         run: |
-          REPO_URL="${{ inputs.DEVICE_TREE_URL }}"
-          BRANCH="${{ inputs.DEVICE_TREE_BRANCH }}"
-          # Extract owner/repo from URL
-          REPO_PATH=$(echo "$REPO_URL" | sed 's|https://github.com/||' | sed 's|\.git$||')
-          CLONE_URL="https://github.com/${REPO_PATH}"
-          SHA=$(git ls-remote "$CLONE_URL" "refs/heads/$BRANCH" | head -1 | cut -f1)
+          REPO_PATH=$(echo "${{ inputs.DEVICE_TREE_URL }}" | sed 's|https://github.com/||' | sed 's|\.git$||')
+          SHA=$(git ls-remote "https://github.com/${REPO_PATH}" "refs/heads/${{ inputs.DEVICE_TREE_BRANCH }}" | head -1 | cut -f1)
           SHORT_SHA=$(echo "$SHA" | cut -c1-7)
           COMMIT_URL="https://github.com/${REPO_PATH}/commit/${SHA}"
           COMMIT_MSG=$(curl -s "https://api.github.com/repos/${REPO_PATH}/commits/${SHA}" | python3 -c "import sys,json; c=json.load(sys.stdin); print(c.get('commit',{}).get('message','').split(chr(10))[0][:80])" 2>/dev/null || echo "")
@@ -177,41 +164,42 @@ jobs:
           echo "url=$COMMIT_URL" >> "$GITHUB_OUTPUT"
           echo "msg=$COMMIT_MSG" >> "$GITHUB_OUTPUT"
 
-      - name: Collect artifacts with sizes
+      - name: Collect artifacts
         id: artifacts
         run: |
-          ARTIFACTS=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" \
-            --jq '.artifacts[] | "\(.name) (\(.size_in_bytes / 1048576 * 100 | floor / 100) MB)"' 2>/dev/null || echo "")
-          if [ -z "$ARTIFACTS" ]; then
-            ARTIFACTS="(no artifacts)"
-          fi
-          echo "list<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$ARTIFACTS" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
+          ARTIFACTS=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[] | "\(.name) (\(.size_in_bytes / 1048576 * 100 | floor / 100) MB)"' 2>/dev/null || echo "")
+          echo "list=$ARTIFACTS" >> "$GITHUB_OUTPUT"
 
       - name: Send Telegram notification
         env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEV: ${{ inputs.DEVICE_NAME }}
+          BRANCH: ${{ inputs.DEVICE_TREE_BRANCH }}
+          TARGET: ${{ inputs.BUILD_TARGET }}
+          DSHA: ${{ steps.dtree_commit.outputs.sha }}
+          DMSG: ${{ steps.dtree_commit.outputs.msg }}
+          DURL: ${{ steps.dtree_commit.outputs.url }}
+          DUR: ${{ steps.meta.outputs.duration }}
+          STATUS: ${{ steps.meta.outputs.status }}
+          ARTS: ${{ steps.artifacts.outputs.list }}
+          URL: ${{ steps.meta.outputs.run_url }}
         run: |
-          MSG="🪡 OrangeFox Build Complete
-#Z2577
+          MSG=$(cat <<MSGEOF
+          OrangeFox Build Complete #Z2577
 
-📱 Device: ${{ inputs.DEVICE_NAME }} (Nubia V80 Max)
-🌿 Branch: ${{ inputs.DEVICE_TREE_BRANCH }}
-📝 Commit: ${{ steps.dtree_commit.outputs.sha }} - ${{ steps.dtree_commit.outputs.msg }}
-🔗 ${{ steps.dtree_commit.outputs.url }}
-🎯 Target: ${{ inputs.BUILD_TARGET }}.img
-⏱ Duration: ${{ steps.meta.outputs.duration }}
-📊 Status: ${{ steps.meta.outputs.status }}
-
-📦 Artifacts:
-${{ steps.artifacts.outputs.list }}
-
-🔗 Summary: ${{ steps.meta.outputs.run_url }}"
-
+          Device: ${DEV} (Nubia V80 Max)
+          Branch: ${BRANCH}
+          Commit: ${DSHA} - ${DMSG}
+          URL: ${DURL}
+          Target: ${TARGET}.img
+          Duration: ${DUR}
+          Status: ${STATUS}
+          Artifacts: ${ARTS}
+          Summary: ${URL}
+          MSGEOF
+          )
           ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
-
-          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
-            -d "{\"chat_id\": \"${TELEGRAM_CHAT}\", \"text\": ${ESCAPED}, \"parse_mode\": \"\"}"
+            -d "{\"chat_id\": \"${TG_CHAT}\", \"text\": ${ESCAPED}}"
