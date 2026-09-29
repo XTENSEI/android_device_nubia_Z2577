@@ -49,11 +49,11 @@ PRODUCT_PACKAGES += \
     android.hardware.security.secureclock-V1-ndk \
     android.hardware.security.sharedsecret-V1-ndk
 
-# Gatekeeper (HIDL V1 — stock Unisoc gatekeeper@1.0-service.trusty)
+# Gatekeeper (HIDL V1 - stock Unisoc gatekeeper@1.0-service.trusty)
 PRODUCT_PACKAGES += \
     android.hardware.gatekeeper-V1-ndk
 
-# Keymint (AIDL V2 — stock keymint@2.0-unisoc.service.trusty)
+# Keymint (AIDL V2 - stock keymint@2.0-unisoc.service.trusty)
 PRODUCT_PACKAGES += \
     android.hardware.security.keymint-V3-ndk
 

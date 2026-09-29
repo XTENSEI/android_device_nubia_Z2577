@@ -36,7 +36,7 @@ verified on device.
       product, odm, dlkms, boot, etc.)
 - [?] Backup/restore to/from external storage
 - [?] Backup/restore to/from adb
-- [ ] Decrypt /data — metadata FBE. keymint TA confirmed alive in recovery
+- [ ] Decrypt /data - metadata FBE. keymint TA confirmed alive in recovery
       (trusty v2.1.1, `com.android.trusty.keymaster` answers); decrypt build in
       flight. gatekeeper TA absent, not needed for DE-key unwrap.
 - [x] Correct date
@@ -93,7 +93,7 @@ fastboot boot vendor_boot.img
 ## Credits
 
 - [TeamWin Recovery Project](https://github.com/TeamWin)
-- [Massatriof16](https://github.com/Massatriof16) — reference Unisoc trees
+- [Massatriof16](https://github.com/Massatriof16) - reference Unisoc trees
   (kl4, P671L) and the Action-Recovery-Builder workflow
-- [MIO-KITCHEN](https://github.com/AKUBI-LT0/MIO-KITCHEN) — stock image
+- [MIO-KITCHEN](https://github.com/AKUBI-LT0/MIO-KITCHEN) - stock image
   extraction
