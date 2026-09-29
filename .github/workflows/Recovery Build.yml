@@ -1,5 +1,7 @@
 name: Recovery Build
 
+permissions: write-all
+
 on:
   workflow_dispatch:
     inputs:
@@ -12,7 +14,7 @@ on:
         - 12.1
         - 11
         required: true
-        default: 12.1
+        default: 14.1
       DEVICE_TREE_URL:
         description: Device Tree URL
         required: true
@@ -20,7 +22,7 @@ on:
       DEVICE_TREE_BRANCH:
         description: Device Tree Branch
         required: true
-        default: twrp-12.1
+        default: fox-14.1
       DEVICE_PATH:
         description: Path the device tree should be synced to, relative to source root
         required: true

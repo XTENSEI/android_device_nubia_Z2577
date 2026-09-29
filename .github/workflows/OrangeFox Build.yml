@@ -1,5 +1,7 @@
 name: OrangeFox Build
 
+permissions: write-all
+
 on:
   workflow_dispatch:
     inputs:
@@ -10,7 +12,7 @@ on:
       DEVICE_TREE_BRANCH:
         description: Device Tree Branch
         required: true
-        default: fox_14.1
+        default: fox-14.1
       DEVICE_PATH:
         description: Path the device tree should be synced to, relative to source root
         required: true
@@ -67,7 +69,7 @@ jobs:
         chmod a+x ~/bin/repo
         sudo ln -sf ~/bin/repo /usr/bin/repo
 
-    - name: Set up OrangeFox fox_14.1 sources
+    - name: Set up OrangeFox fox-14.1 sources
       run: |
         git config --global user.name "${GITHUB_ACTOR}"
         git config --global user.email "${GITHUB_ACTOR_ID}+${GITHUB_ACTOR}@users.noreply.github.com"
@@ -124,7 +126,7 @@ jobs:
         name: ${{ inputs.DEVICE_NAME }} (OrangeFox)
         tag_name: ${{ github.run_id }}
         body: |
-          Manifest: fox_14.1
+          Manifest: fox-14.1
           Target: ${{ inputs.BUILD_TARGET }}.img
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

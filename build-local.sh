@@ -5,7 +5,7 @@ set -eo pipefail # no -u: AOSP envsetup.sh reads unset vars (TOP, ZSH_VERSION)
 
 FOX_BRANCH="14.1"
 DEVICE_TREE_URL="https://github.com/XTENSEI/android_device_nubia_Z2577"
-DEVICE_TREE_BRANCH="fox_14.1"
+DEVICE_TREE_BRANCH="fox-14.1"
 DEVICE_PATH="device/nubia/Z2577"
 DEVICE_NAME="Z2577"
 BUILD_TARGET="vendor_boot"
