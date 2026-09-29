@@ -71,8 +71,8 @@ TARGET_NO_BOOTLOADER := true
 # Display
 TARGET_SCREEN_DENSITY := 320
 
-# Touch
-TW_LOAD_VENDOR_MODULES := "lcd_state_notify.ko zte_tpd.ko"
+# Touch + trusty stack - loader only insmods whitelisted modules
+TW_LOAD_VENDOR_MODULES := "trusty.ko trusty-ipc.ko trusty-irq.ko trusty-log.ko trusty-pm.ko trusty-virtio.ko trusty-tui.ko ion_ipc_trusty.ko rpmb.ko lcd_state_notify.ko zte_tpd.ko"
 # Load from recovery ramdisk, not vendor_dlkm
 TW_LOAD_VENDOR_BOOT_MODULES := true
 BOARD_KERNEL_SEPARATED_DTBO := true
