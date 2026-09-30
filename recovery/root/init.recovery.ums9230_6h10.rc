@@ -2,7 +2,8 @@
 import /init.recovery.common.rc
 
 # FBE decrypt: prepdecrypt waits for /dev/trusty-ipc* then sets crypto.ready
-# keystore2 + boot-hal come from TWRP's own ramdisk rc files, not here
+# The SPRD boot HAL below provides android.hardware.boot@1.0, which recovery
+# waits on forever before decrypt; keystore2 stays in TWRP's own rc files
 on fs
     start prepdecrypt
 
@@ -25,6 +26,13 @@ service gatekeeper-1-0 /system/bin/android.hardware.gatekeeper@1.0-service.trust
     user root
     group root
     disabled
+    seclabel u:r:recovery:s0
+
+# stock vendor rc, class hal because recovery never class_starts early_hal
+service vendor.sprd.boot-hal-1-2 /vendor/bin/hw/vendor.sprd.hardware.boot@1.2-service
+    class hal
+    user root
+    group root
     seclabel u:r:recovery:s0
 
 on property:crypto.ready=1
