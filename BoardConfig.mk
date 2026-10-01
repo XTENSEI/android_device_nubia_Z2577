@@ -163,6 +163,9 @@ TW_BRIGHTNESS_PATH := "/sys/class/backlight/sprd_backlight/brightness"
 TW_MAX_BRIGHTNESS := 255
 TW_DEFAULT_BRIGHTNESS := 200
 
+# Z2577 has no timed_output/leds vibrator; it is an evdev FF device only
+TW_USE_FF_VIBRATOR := true
+
 # Status bar icons off the punch-hole camera (kl4 values)
 TW_CUSTOM_CPU_POS := "300"
 TW_CUSTOM_CLOCK_POS := "70"
