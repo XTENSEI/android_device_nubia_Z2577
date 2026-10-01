@@ -27,6 +27,19 @@ if [ $WAITED -ge $TIMEOUT ]; then
     ls -la /odm /mnt/odm 2>&1
 fi
 
+# TWRP does not mount odm itself and nothing else mounts it in recovery;
+# the gatekeeper TA lives there, so mount it read-only if needed.
+if [ ! -e "$TA" ]; then
+    mount -t erofs -o ro /dev/block/by-name/odm /odm 2>/dev/null ||
+        mount -o ro /dev/block/by-name/odm /odm 2>/dev/null
+    if [ -e "$TA" ]; then
+        echo "odm mounted by script"
+    else
+        echo "$TA still missing, aborting"
+        exit 1
+    fi
+fi
+
 setprop vendor.sprd.tsupplicant.enabled 1
 sleep 2
 setprop twrp.tsupplicant.ready 1
