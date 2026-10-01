@@ -1,6 +1,8 @@
 # TWRP-specific flags for Z2577 (Nubia V80 Max)
-# Matched to the Android-format /system/etc/recovery.fstab entries by mount point.
+# Extends the Android-format /system/etc/recovery.fstab by mount point.
 # Format: mount_point fstype device [alternate_device] flags=...
+# /storage/sdcard0 is declared here only: TWRP's merge does not match
+# two-segment mount points, so a copy in recovery.fstab would duplicate it.
 
 ## Bootloader / firmware
 /spl                  emmc   /dev/block/mmcblk0boot0             flags=display=spl;slotselect
@@ -52,4 +54,4 @@
 /metadata             ext4   /dev/block/by-name/metadata        flags=display=metadata
 /data                 f2fs   /dev/block/by-name/userdata        flags=display=data
 /cache                ext4   /dev/block/by-name/cache           flags=display=cache
-/storage/sdcard0      vfat   /dev/block/mmcblk1p1               flags=display=sdcard0
+/storage/sdcard0      vfat   /dev/block/mmcblk1p1               flags=display="MicroSD";storage;removable
