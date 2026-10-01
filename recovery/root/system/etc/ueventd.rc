@@ -79,6 +79,12 @@ subsystem vfio
 # trusty TEE: the TA supplier runs as system (stock ueventd parity)
 /dev/trusty-ipc-dev0      0660   system     system
 
+# TEE secure storage proxies (sprdstorageproxyd runs as system) need the rpmb
+# node; stock vendor ueventd.rc lines 202/269/270.
+/dev/rpmb0                0660   system     system
+/dev/block/mmcblk0rpmb    0660   system     system
+/dev/mmcblk0rpmb          0660   system     system
+
 # sysfs properties
 /sys/devices/platform/trusty.*      trusty_version        0440  root   log
 /sys/devices/virtual/input/input*   enable      0660  root   input

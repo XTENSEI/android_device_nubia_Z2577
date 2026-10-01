@@ -48,7 +48,27 @@ service ta-supplier-wait /system/bin/start_tsupplicant.sh
     group root
     seclabel u:r:recovery:s0
 
+# TEE secure-storage proxies (stock storageproxyd_android.rc, class core in
+# normal boot): the gatekeeper TA reads its failure records through them, and
+# verify dies with ERROR_UNKNOWN when the ss server has no proxy. Stock start
+# order is rpmb first, then ns.
+service vendor.rpmbproxy /vendor/bin/sprdstorageproxyd -f rpmb -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
+    user root
+    group system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.nsproxy /vendor/bin/sprdstorageproxyd -f ns -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
+    user root
+    group system
+    disabled
+    seclabel u:r:recovery:s0
+
 on property:crypto.ready=1
+    mkdir /data/vendor/sprd_ss 0770 system system
+    start vendor.rpmbproxy
+    start vendor.nsproxy
     start keymint-2-0
     start ta-supplier-wait
 
