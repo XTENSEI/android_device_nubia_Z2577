@@ -1,9 +1,8 @@
 # Recovery init for Nubia V80 Max (Z2577) - ro.hardware=ums9230_6h10
 import /init.recovery.common.rc
 
-# FBE decrypt: prepdecrypt waits for /dev/trusty-ipc* then sets crypto.ready
-# The SPRD boot HAL below provides android.hardware.boot@1.0, which recovery
-# waits on forever before decrypt; keystore2 stays in TWRP's own rc files
+# FBE decrypt: prepdecrypt sets crypto.ready; the SPRD boot HAL below provides
+# android.hardware.boot@1.0, which recovery waits on before decrypt
 on fs
     start prepdecrypt
 
@@ -35,8 +34,29 @@ service vendor.sprd.boot-hal-1-2 /vendor/bin/hw/vendor.sprd.hardware.boot@1.2-se
     group root
     seclabel u:r:recovery:s0
 
+# TEE TA supplier, stock class core service that recovery has to start itself
+service vendor.tsupplicant /vendor/bin/tsupplicant odm/firmware odm/firmware/fingerprint vendor/firmware
+    user system
+    group system
+    disabled
+    seclabel u:r:recovery:s0
+
+service ta-supplier-wait /system/bin/start_tsupplicant.sh
+    oneshot
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
 on property:crypto.ready=1
     start keymint-2-0
+    start ta-supplier-wait
+
+on property:vendor.sprd.tsupplicant.enabled=1
+    start vendor.tsupplicant
+
+# only once the supplier is up, the TEE asks it for the TA on connect
+on property:twrp.tsupplicant.ready=1
     start gatekeeper-1-0
 
 on property:ro.crypto.state=unsupported || property:ro.crypto.state=unencrypted || property:twrp.decrypt.done=true

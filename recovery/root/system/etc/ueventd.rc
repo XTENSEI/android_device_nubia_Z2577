@@ -28,12 +28,9 @@ subsystem vfio
     devname uevent_devpath
     dirname /dev/vfio
 
-# ueventd can only set permissions on device nodes and their associated
-# sysfs attributes, not on arbitrary paths.
-#
-# format for /dev rules: devname mode uid gid
-# format for /sys rules: nodename attr mode uid gid
-# shortcut: "mtd@NN" expands to "/dev/mtd/mtdNN"
+# only device nodes and their sysfs attrs can be set
+# /dev rules: devname mode uid gid; /sys rules: nodename attr mode uid gid
+# "mtd@NN" expands to /dev/mtd/mtdNN
 
 /dev/null                 0666   root       root
 /dev/zero                 0666   root       root
@@ -42,7 +39,7 @@ subsystem vfio
 /dev/tty                  0666   root       root
 /dev/random               0666   root       root
 /dev/urandom              0666   root       root
-# Aside from kernel threads, only prng_seeder needs access to HW RNG
+# only prng_seeder needs the HW RNG
 /dev/hw_random            0400   prng_seeder prng_seeder
 /dev/ashmem*              0666   root       root
 /dev/binder               0666   root       root
@@ -55,7 +52,7 @@ subsystem vfio
 /dev/dma_heap/system-uncached      0444   system     system
 /dev/dma_heap/system-secure        0444   system     system
 
-# kms driver for drm based gpu
+# drm gpu
 /dev/dri/*                0666   root       graphics
 
 # these should not be world writable
@@ -73,7 +70,7 @@ subsystem vfio
 /dev/tun                  0660   system     vpn
 /dev/hidraw*              0660   system     system
 
-# CDMA radio interface MUX
+# CDMA radio MUX
 /dev/ppp                  0660   radio      vpn
 
 /dev/kvm                  0666   root       root
