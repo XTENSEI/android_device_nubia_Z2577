@@ -65,10 +65,21 @@ service vendor.nsproxy /vendor/bin/sprdstorageproxyd -f ns -d /dev/trusty-ipc-de
     disabled
     seclabel u:r:recovery:s0
 
+service vendor.prodproxy /vendor/bin/sprdstorageproxyd -f prodnv -d /dev/trusty-ipc-dev0 -p /mnt/vendor/productinfo/sprd_ss
+    user root
+    group system
+    oneshot
+    disabled
+    seclabel u:r:recovery:s0
+
 on property:crypto.ready=1
     mkdir /data/vendor/sprd_ss 0770 system system
+    mkdir /mnt/vendor 0755 system system
+    mount ext4 /dev/block/by-name/prodnv /mnt/vendor noatime,nosuid,nodev,nomblk_io_submit,noauto_da_alloc
+    mkdir /mnt/vendor/productinfo/sprd_ss 0770 system system
     start vendor.rpmbproxy
     start vendor.nsproxy
+    start vendor.prodproxy
     start keymint-2-0
     start ta-supplier-wait
 
