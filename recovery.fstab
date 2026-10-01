@@ -15,6 +15,7 @@
 /dev/block/by-name/vbmeta_system /vbmeta_system emmc  defaults          slotselect
 /dev/block/by-name/vbmeta_vendor /vbmeta_vendor emmc  defaults          slotselect
 /dev/block/by-name/dtbo          /dtbo         emmc   defaults          slotselect
+/dev/block/by-name/vendor_boot   /vendor_boot  emmc   defaults          slotselect
 
 # Modem / DSP
 /dev/block/by-name/l_ldsp        /ltedsp       emmc   defaults          slotselect

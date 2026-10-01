@@ -11,10 +11,11 @@
 /sml                  emmc   /dev/block/by-name/sml              flags=display=sml;slotselect
 /tos                  emmc   /dev/block/by-name/trustos          flags=display=tos;slotselect
 /teecfg               emmc   /dev/block/by-name/teecfg           flags=display=teecfg;slotselect
-/vbmeta               emmc   /dev/block/by-name/vbmeta           flags=display=vbmeta;slotselect
-/vbmeta_system        emmc   /dev/block/by-name/vbmeta_system    flags=display=vbmeta_system;slotselect
-/vbmeta_vendor        emmc   /dev/block/by-name/vbmeta_vendor    flags=display=vbmeta_vendor;slotselect
-/dtbo                 emmc   /dev/block/by-name/dtbo             flags=display=dtbo;slotselect
+/vbmeta               emmc   /dev/block/by-name/vbmeta           flags=display=vbmeta;slotselect;flashimg
+/vbmeta_system        emmc   /dev/block/by-name/vbmeta_system    flags=display=vbmeta_system;slotselect;flashimg
+/vbmeta_vendor        emmc   /dev/block/by-name/vbmeta_vendor    flags=display=vbmeta_vendor;slotselect;flashimg
+/dtbo                 emmc   /dev/block/by-name/dtbo             flags=display=dtbo;slotselect;flashimg
+/vendor_boot          emmc   /dev/block/by-name/vendor_boot      flags=display=vendor_boot;slotselect;flashimg
 
 ## Modem / DSP
 /ltedsp               emmc   /dev/block/by-name/l_ldsp           flags=display=ltedsp;slotselect
@@ -33,7 +34,7 @@
 
 ## Boot control
 /misc                 emmc   /dev/block/by-name/misc
-/boot                 emmc   /dev/block/by-name/boot             flags=display=boot;slotselect
+/boot                 emmc   /dev/block/by-name/boot             flags=display=boot;slotselect;flashimg
 /persist              emmc   /dev/block/by-name/persist          flags=display=persist
 /logo                 emmc   /dev/block/by-name/logo             flags=display=logo
 /fbootlogo            emmc   /dev/block/by-name/fbootlogo        flags=display=fbootlogo
