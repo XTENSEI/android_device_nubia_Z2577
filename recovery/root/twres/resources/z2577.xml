@@ -1,12 +1,8 @@
 <?xml version="1.0"?>
-<!-- Z2577 (720x1640) theme overrides, loaded after the fox vars.
-     The Additions listbox on the menu page is sized for 5 items
-     (%screen_w%-200 = 880 design px). With Magisk, KernelSU and fox
-     modules all present it grows to 9 items and its tail hides under
-     the navbar with scrolling disabled. Shrinking the box makes TWRP
-     scroll the list instead of clipping it. -->
+<!-- Z2577 (720x1640) theme overrides, included after vars.xml. -->
 <recovery>
-	<resources>
-		<variable name="adv_additions_h" value="%screen_w%-360" />
-	</resources>
+	<variables>
+		<!-- Additions list: end at the navbar instead of running under it. -->
+		<variable name="adv_additions_h" value="%row_nav_y%-%row5_1_y%" />
+	</variables>
 </recovery>
