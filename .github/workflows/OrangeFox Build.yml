@@ -114,6 +114,8 @@ jobs:
         path: |
           workspace/out/target/product/${{ inputs.DEVICE_NAME }}/${{ inputs.BUILD_TARGET }}.img
           workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.md5
           workspace/out/target/product/${{ inputs.DEVICE_NAME }}/obj/PACKAGING/vendor_ramdisk_fragments_intermediates/recovery.*
         if-no-files-found: warn
 
@@ -123,6 +125,8 @@ jobs:
         files: |
           workspace/out/target/product/${{ inputs.DEVICE_NAME }}/${{ inputs.BUILD_TARGET }}.img
           workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.img
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.zip
+          workspace/out/target/product/${{ inputs.DEVICE_NAME }}/OrangeFox*.md5
           workspace/out/target/product/${{ inputs.DEVICE_NAME }}/obj/PACKAGING/vendor_ramdisk_fragments_intermediates/recovery.*
         name: ${{ inputs.DEVICE_NAME }} (OrangeFox)
         tag_name: ${{ github.run_id }}
