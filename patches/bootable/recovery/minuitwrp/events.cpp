@@ -49,6 +49,13 @@ static std::atomic_int vib_on_count = 0;
 #endif
 #endif
 
+/* BoardConfig vars do not reach minuitwrp CFLAGS; this tree always wants
+ * the evdev FF path. Z2577's vibrator exposes only FF_RUMBLE, no
+ * timed_output or leds/vibrator node. */
+#ifndef TW_USE_FF_VIBRATOR
+#define TW_USE_FF_VIBRATOR
+#endif
+
 #include "common.h"
 #include "twcommon.h"
 
