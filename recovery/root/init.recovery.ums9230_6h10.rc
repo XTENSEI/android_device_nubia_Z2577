@@ -48,10 +48,16 @@ service ta-supplier-wait /system/bin/start_tsupplicant.sh
     group root
     seclabel u:r:recovery:s0
 
+service storage-proxies /system/bin/start_storage_proxies.sh
+    oneshot
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
 # TEE secure-storage proxies (stock storageproxyd_android.rc, class core in
-# normal boot): the gatekeeper TA reads its failure records through them, and
-# verify dies with ERROR_UNKNOWN when the ss server has no proxy. Stock start
-# order is rpmb first, then ns.
+# normal boot): the gatekeeper TA reads its failure records through them.
+# start_storage_proxies.sh starts them once /data and prodnv are mounted.
 service vendor.rpmbproxy /vendor/bin/sprdstorageproxyd -f rpmb -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
     user root
     group system
@@ -73,14 +79,8 @@ service vendor.prodproxy /vendor/bin/sprdstorageproxyd -f prodnv -d /dev/trusty-
     seclabel u:r:recovery:s0
 
 on property:crypto.ready=1
-    mkdir /data/vendor/sprd_ss 0770 system system
-    mkdir /mnt/vendor 0755 system system
-    mount ext4 /dev/block/by-name/prodnv /mnt/vendor noatime,nosuid,nodev,nomblk_io_submit,noauto_da_alloc
-    mkdir /mnt/vendor/productinfo/sprd_ss 0770 system system
-    start vendor.rpmbproxy
-    start vendor.nsproxy
-    start vendor.prodproxy
     start keymint-2-0
+    start storage-proxies
     start ta-supplier-wait
 
 on property:vendor.sprd.tsupplicant.enabled=1
