@@ -27,9 +27,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <fstream>
-#ifdef USE_QTI_AIDL_HAPTICS_FIX_OFF
+/* Unconditional: the FF vibrator branch below starts a worker thread, and
+ * upstream only pulls in <thread> for the QTI haptics path. */
 #include <thread>
-#endif
 
 #ifdef USE_QTI_HAPTICS
 #include <android/hardware/vibrator/1.2/IVibrator.h>
