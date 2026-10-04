@@ -2,7 +2,11 @@
 <!-- Z2577 (720x1640) theme overrides, included after vars.xml. -->
 <recovery>
 	<variables>
-		<!-- Additions list: end at the navbar instead of running under it. -->
-		<variable name="adv_additions_h" value="%row_nav_y%-%row5_1_y%" />
+		<!-- Compact list rows so the six additions entries fit above the navbar. -->
+		<variable name="bl_h1" value="104" />
+		<!-- End the additions list where page content is clipped (navbar panel top).
+		     The old value ran past that line, so the list thought ~4.4 rows were
+		     visible and could only scroll a few pixels. -->
+		<variable name="adv_additions_h" value="%nav_panel_y%-%row5_1_y%" />
 	</variables>
 </recovery>
