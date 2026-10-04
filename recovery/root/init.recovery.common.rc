@@ -7,22 +7,15 @@ service healthd /system/bin/healthd -r
     critical
     seclabel u:r:healthd:s0
 
-service create_splloader_dual_slot_byname_path /system/bin/create_splloader_dual_slot_byname_path.sh
-    user root
-    group root system
-    disabled
-    oneshot
-    seclabel u:r:create_spl_link_recovery:s0
-
-# vendor.mlogservice removed: /vendor/bin/mlogservice is not shipped in this
-# ramdisk, so class main execs a missing file and init retries it forever
-
+# create_splloader_dual_slot_byname_path removed: the script is not shipped in
+# this ramdisk, so the on init start was a failed exec on every boot
+#
+# vendor.mlogservice removed earlier for the same reason
 
 on init
     # strict PROT_EXEC checks on mmap/mprotect
     write /sys/fs/selinux/checkreqprot 0
     start healthd
-    start create_splloader_dual_slot_byname_path
 
     export PATH /sbin:/system/bin:/vendor/bin
     export SECONDARY_STORAGE /external_sd
