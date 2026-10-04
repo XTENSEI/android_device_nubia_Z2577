@@ -40,7 +40,8 @@ Bootloader | must be unlocked
 - [?] Every partition listed in the mount and backup lists
 - [?] Cold boot decrypt with no manual steps
 - [?] Vibrator in the UI (evdev FF_RUMBLE verified with the test binary)
-- [✔] microSD mounted as removable storage
+- [?] microSD as removable storage, detected and mounted but switching was
+      broken before the `/external_sd` fix, verify on the next build
 - [✔] NTFS mount support
 - [ ] Backup to microSD
 - [ ] Restore from microSD
