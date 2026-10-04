@@ -27,19 +27,23 @@ service gatekeeper-1-0 /system/bin/android.hardware.gatekeeper@1.0-service.trust
     disabled
     seclabel u:r:recovery:s0
 
-# stock vendor rc, class hal because recovery never class_starts early_hal
-service vendor.sprd.boot-hal-1-2 /vendor/bin/hw/vendor.sprd.hardware.boot@1.2-service
+# stock vendor rc, class hal because recovery never class_starts early_hal.
+# /vendor is unmounted by TWRP after its fstab pass, so the binary lives in
+# /system and LD_LIBRARY_PATH keeps the linker on the ramdisk copies
+service vendor.sprd.boot-hal-1-2 /system/bin/hw/vendor.sprd.hardware.boot@1.2-service
     class hal
     user root
     group root
     seclabel u:r:recovery:s0
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib64/hw
 
 # TEE TA supplier, stock class core service that recovery has to start itself
-service vendor.tsupplicant /vendor/bin/tsupplicant odm/firmware odm/firmware/fingerprint vendor/firmware
+service vendor.tsupplicant /system/bin/tsupplicant odm/firmware odm/firmware/fingerprint vendor/firmware
     user system
     group system
     disabled
     seclabel u:r:recovery:s0
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib64/hw
 
 service ta-supplier-wait /system/bin/start_tsupplicant.sh
     oneshot
@@ -67,25 +71,28 @@ service mtp-probe /system/bin/start_mtp.sh
 # TEE secure-storage proxies (stock storageproxyd_android.rc, class core in
 # normal boot): the gatekeeper TA reads its failure records through them.
 # start_storage_proxies.sh starts them once /data and prodnv are mounted.
-service vendor.rpmbproxy /vendor/bin/sprdstorageproxyd -f rpmb -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
+service vendor.rpmbproxy /system/bin/sprdstorageproxyd -f rpmb -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
     user root
     group system
     oneshot
     disabled
     seclabel u:r:recovery:s0
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib64/hw
 
-service vendor.nsproxy /vendor/bin/sprdstorageproxyd -f ns -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
+service vendor.nsproxy /system/bin/sprdstorageproxyd -f ns -d /dev/trusty-ipc-dev0 -p /data/vendor/sprd_ss
     user root
     group system
     disabled
     seclabel u:r:recovery:s0
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib64/hw
 
-service vendor.prodproxy /vendor/bin/sprdstorageproxyd -f prodnv -d /dev/trusty-ipc-dev0 -p /mnt/vendor/productinfo/sprd_ss
+service vendor.prodproxy /system/bin/sprdstorageproxyd -f prodnv -d /dev/trusty-ipc-dev0 -p /mnt/vendor/productinfo/sprd_ss
     user root
     group system
     oneshot
     disabled
     seclabel u:r:recovery:s0
+    setenv LD_LIBRARY_PATH /system/lib64:/system/lib64/hw
 
 on property:crypto.ready=1
     start keymint-2-0
