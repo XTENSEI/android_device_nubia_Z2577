@@ -217,9 +217,19 @@ int vibrate(int timeout_ms)
             play.code = effect.id;
             play.value = 1;
             if (write(ff_fd, &play, sizeof(play)) >= 0) {
-                usleep(timeout_ms * 1000);
-                play.value = 0;
-                write(ff_fd, &play, sizeof(play));
+                /* Stop the effect from a worker thread so the caller (GUI
+                 * thread) is never blocked for the vibration duration. */
+                int fd = ff_fd;
+                int id = effect.id;
+                std::thread([fd, id, timeout_ms] {
+                    usleep(timeout_ms * 1000);
+                    struct input_event stop;
+                    memset(&stop, 0, sizeof(stop));
+                    stop.type = EV_FF;
+                    stop.code = id;
+                    stop.value = 0;
+                    write(fd, &stop, sizeof(stop));
+                }).detach();
             }
         }
     }
