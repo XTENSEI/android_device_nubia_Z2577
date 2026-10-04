@@ -62,7 +62,10 @@ Bootloader | must be unlocked
 - [ ] USB mass storage
 - [?] MTP, compiled in and the server starts, but the kernel has no ffs_mtp so
       neither `/dev/mtp_usb` nor `/dev/usb-ffs/mtp/ep0` ever appears.
-      `start_mtp.sh` loads a vendor module if one turns up. `adb pull` works
+      `start_mtp.sh` loads a vendor module if one turns up
+- [?] RNDIS, `setprop sys.usb.rndis 1` from adb links the vendor rndis function
+      next to `ffs.adb` and gives `usb0` 192.168.42.129/24. No DHCP server in the
+      ramdisk, so the PC needs a matching address by hand. Log in `/tmp/start_rndis.log`
 - [!] Flashlight, no torch node in the kernel
 
 # Clone

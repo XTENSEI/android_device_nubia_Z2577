@@ -68,6 +68,18 @@ service mtp-probe /system/bin/start_mtp.sh
     group root
     seclabel u:r:recovery:s0
 
+# MTP is dead here, this is the file transfer path: started on demand with
+# setprop sys.usb.rndis 1 so it never touches the gadget unasked
+service rndis-net /system/bin/start_rndis.sh
+    oneshot
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
+on property:sys.usb.rndis=1
+    start rndis-net
+
 # TEE secure-storage proxies (stock storageproxyd_android.rc, class core in
 # normal boot): the gatekeeper TA reads its failure records through them.
 # start_storage_proxies.sh starts them once /data and prodnv are mounted.
