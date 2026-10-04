@@ -43,3 +43,4 @@ sleep 2
 setprop ctl.start vendor.prodproxy
 
 echo "storage proxies started"
+setprop twrp.storage.ready 1
