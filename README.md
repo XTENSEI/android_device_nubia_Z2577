@@ -41,8 +41,10 @@ untested. `[!]` not possible.
 
 ### Partitions and storage
 
-- [x] 43 entries in the mount and backup lists, all modem/DSP and boot control
-      partitions included
+- [~] 50 twrp.flags entries, 49 of them with `backup=1` and `flashimg=1`,
+      covering every stock Unisoc partition: boot chain, vbmeta sets, modem and
+      NV, boot control. `/super` is added by TWRP itself from the logical
+      volumes, a second entry would be listed twice
 - [x] 41 fstab entries: erofs and ext4 system side, f2fs metadata and data
 - [x] microSD as removable storage (vfat, `mmcblk1p1`)
 - [x] 161 vendor kernel modules shipped, 156 loaded by recovery
@@ -62,8 +64,9 @@ untested. `[!]` not possible.
 ### Flash and install
 
 - [x] Install zip sideload
-- [x] Install image picker: boot, vendor_boot, dtbo, vbmeta, vbmeta_system,
-      vbmeta_vendor, super
+- [~] Install image picker covers all 49 flashimg entries plus super. Slot-only
+      partitions (`init_boot`, `dtb`, `logo`, `vbmeta_odm` and friends) carry
+      `slotselect`, TWRP appends the active slot suffix
 - [x] Format skips secure erase (`BOARD_SUPPRESS_SECURE_ERASE`)
 - [ ] Format all selected partitions
 
