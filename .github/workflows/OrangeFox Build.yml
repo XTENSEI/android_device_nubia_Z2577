@@ -45,6 +45,25 @@ jobs:
         echo "Build Target: ${{ inputs.BUILD_TARGET }}.img"
         echo "::endgroup::"
 
+    - name: Notify build started
+      env:
+        TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        DEV: ${{ inputs.DEVICE_NAME }}
+        BRANCH: ${{ inputs.DEVICE_TREE_BRANCH }}
+        URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        MSG=$(printf '%s\n' \
+          "⚙️ Build Started" \
+          "📋 Workflow: OrangeFox Build" \
+          "📱 Device: ${DEV}" \
+          "🌿 Branch: ${BRANCH}" \
+          "🔍 Watch on GitHub Actions (${URL})")
+        ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+        curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+          -H "Content-Type: application/json" \
+          -d "{\"chat_id\": \"${TG_CHAT}\", \"text\": ${ESCAPED}}"
+
     - name: Check Out
       uses: actions/checkout@v4
 
@@ -91,6 +110,8 @@ jobs:
         grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
         grep -q 'retry || tries == 0' system/libhidl/transport/ServiceManagement.cpp
         grep -q 'TW_USE_FF_VIBRATOR' bootable/recovery/minuitwrp/events.cpp
+        grep -q 'input_timeout_ms = 5' bootable/recovery/gui/gui.cpp
+        grep -q 'define TW_FRAMERATE 120' bootable/recovery/gui/objects.hpp
 
     - name: Fix CTS release version check
       run: |
@@ -158,6 +179,8 @@ jobs:
           fi
           echo "status=$STATUS" >> "$GITHUB_OUTPUT"
           echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          echo "release_url=https://github.com/${{ github.repository }}/releases/tag/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
 
       - name: Get device tree commit
         id: dtree_commit
@@ -183,29 +206,26 @@ jobs:
           TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
           DEV: ${{ inputs.DEVICE_NAME }}
           BRANCH: ${{ inputs.DEVICE_TREE_BRANCH }}
-          TARGET: ${{ inputs.BUILD_TARGET }}
           DSHA: ${{ steps.dtree_commit.outputs.sha }}
-          DMSG: ${{ steps.dtree_commit.outputs.msg }}
-          DURL: ${{ steps.dtree_commit.outputs.url }}
-          DUR: ${{ steps.meta.outputs.duration }}
           STATUS: ${{ steps.meta.outputs.status }}
-          ARTS: ${{ steps.artifacts.outputs.list }}
+          DATE: ${{ steps.meta.outputs.date }}
+          REL: ${{ steps.meta.outputs.release_url }}
           URL: ${{ steps.meta.outputs.run_url }}
         run: |
-          MSG=$(cat <<MSGEOF
-          OrangeFox Build Complete #Z2577
-
-          Device: ${DEV} (Nubia V80 Max)
-          Branch: ${BRANCH}
-          Commit: ${DSHA} - ${DMSG}
-          URL: ${DURL}
-          Target: ${TARGET}.img
-          Duration: ${DUR}
-          Status: ${STATUS}
-          Artifacts: ${ARTS}
-          Summary: ${URL}
-          MSGEOF
-          )
+          if [ "${STATUS}" = "Passed" ]; then
+            HEAD="🚀 Unofficial Custom Recovery Build Released"
+          else
+            HEAD="⚠️ Build ${STATUS}"
+          fi
+          MSG=$(printf '%s\n' \
+            "${HEAD}" \
+            "📋 Workflow: OrangeFox Build" \
+            "📱 Device: ${DEV}" \
+            "🌿 Branch: ${BRANCH}" \
+            "📅 Build Date: ${DATE}" \
+            "📝 Commit: ${DSHA}" \
+            "🔗 View Release on GitHub (${REL})" \
+            "🪵 Full Workflow Log (${URL})")
           ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
           curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
             -H "Content-Type: application/json" \
