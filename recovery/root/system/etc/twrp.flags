@@ -7,8 +7,11 @@
 # appends the active slot suffix and symlinks the bare name to it.
 # /super is NOT declared here: TWRP synthesizes it from the logical volumes
 # and a second entry would show up twice in Install Image.
-# /storage/sdcard0 is declared here only: TWRP's merge does not match
-# two-segment mount points, so a copy in recovery.fstab would duplicate it.
+# The card is /external_sd on purpose. TWFunc::Get_Root_Path() truncates every
+# path to its first segment, so a two segment mount point like /storage/sdcard0
+# can never be found by path: storage switching, browsing and the Is_Mounted
+# checks all fail while the kernel mount itself succeeds. /storage/sdcard0 and
+# /mnt/sdcard are kept as symlinks to it by init.recovery.common.rc.
 
 ## Bootloader / firmware
 /spl                 emmc   /dev/block/mmcblk0boot0              flags=display=spl;slotselect;backup=1;flashimg=1
@@ -68,4 +71,4 @@
 /metadata            ext4   /dev/block/by-name/metadata          flags=display=metadata;backup=1;flashimg=1
 /data                f2fs   /dev/block/by-name/userdata          flags=display=data;backup=1;flashimg=1
 /cache               ext4   /dev/block/by-name/cache             flags=display=cache;backup=1;flashimg=1
-/storage/sdcard0     vfat   /dev/block/mmcblk1p1                 flags=display="MicroSD";storage;removable
+/external_sd          vfat   /dev/block/mmcblk1p1                 flags=display="MicroSD";storage;wipeingui;removable

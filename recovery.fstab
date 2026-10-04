@@ -54,7 +54,7 @@ system_dlkm                      /system_dlkm  erofs  ro                wait,slo
 /dev/block/by-name/metadata      /metadata     ext4   nodev,noatime,nosuid,errors=panic wait,formattable,check
 /dev/block/by-name/userdata      /data         f2fs   noatime,nosuid,nodev,discard,reserve_root=32768,resgid=1065,inline_xattr,inline_data,inlinecrypt,fsync_mode=nobarrier,atgc latemount,wait,quota,check,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,reservedsize=128M,checkpoint=fs,formattable
 
-# Misc mounts -- /storage/sdcard0 is declared in system/etc/twrp.flags only:
-# TWRP's flags merge does not match two-segment mount points, so declaring it
-# here as well would duplicate the partition in the mount list.
+# Misc mounts -- the microSD is declared in system/etc/twrp.flags only, as
+# /external_sd: TWRP looks partitions up by the first path segment, so a
+# two-segment mount point here would never be found.
 /dev/block/by-name/cache         /cache        ext4   defaults          wait,check

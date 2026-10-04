@@ -27,12 +27,14 @@ on init
     start create_splloader_dual_slot_byname_path
 
     export PATH /sbin:/system/bin:/vendor/bin
-    export SECONDARY_STORAGE /storage/sdcard0
+    export SECONDARY_STORAGE /external_sd
 
+    # TWRP mounts the card at /external_sd (see system/etc/twrp.flags), the
+    # stock paths stay as symlinks so both names resolve to the card.
     mkdir /storage
-    mkdir /storage/sdcard1
-    mkdir /storage/sdcard0
-    symlink /storage/sdcard0 /mnt/sdcard
+    mkdir /external_sd
+    symlink /external_sd /storage/sdcard0
+    symlink /external_sd /mnt/sdcard
     symlink /system/etc/bluetooth /etc/bluetooth
 
     mkdir /systeminfo 0777 system system
