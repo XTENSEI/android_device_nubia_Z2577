@@ -114,6 +114,7 @@ jobs:
         grep -q 'input_timeout_ms = 5' bootable/recovery/gui/gui.cpp
         grep -q 'define TW_FRAMERATE 120' bootable/recovery/gui/objects.hpp
         grep -q 'y="%row6_1_y%"' bootable/recovery/gui/theme/portrait_hdpi/pages/install.xml
+        grep -q 'name every logical volume inside super' bootable/recovery/partitionmanager.cpp
 
     - name: Fix CTS release version check
       run: |
