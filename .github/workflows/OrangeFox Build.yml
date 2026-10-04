@@ -110,6 +110,7 @@ jobs:
         grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
         grep -q 'retry || tries == 0' system/libhidl/transport/ServiceManagement.cpp
         grep -q 'TW_USE_FF_VIBRATOR' bootable/recovery/minuitwrp/events.cpp
+        grep -q '^#include <thread>' bootable/recovery/minuitwrp/events.cpp
         grep -q 'input_timeout_ms = 5' bootable/recovery/gui/gui.cpp
         grep -q 'define TW_FRAMERATE 120' bootable/recovery/gui/objects.hpp
 
