@@ -1,99 +1,158 @@
-# TWRP device tree for Nubia V80 Max (Z2577)
+# OrangeFox device tree for Nubia V80 Max (Z2577)
 
-Team Win Recovery Project device tree for the Nubia V80 Max (Z2577).
+OrangeFox/TWRP device tree for the Nubia V80 Max (Z2577). The recovery binary
+is packed into `vendor_boot.img`.
 
 | | |
 |---|---|
-| Device | Nubia V80 Max |
-| SoC | Unisoc T7250 (ums9230_6h10), octa-core |
-| RAM/Storage | 8/12 GB · 128/256 GB |
-| Screen | 720×1640, `sprd_backlight` |
-| Android | 16 (BP2A.250605.031.A3) |
-| Bootloader | unlocked, vendor_boot recovery |
-| Branch | `twrp-12.1` (minimal-manifest-twrp AOSP, TeamWin android-12.1) |
+| Device | Nubia V80 Max, codename Z2577 |
+| SoC | Unisoc T7250 (UMS9230), board `ums9230_6h10` |
+| Screen | 720x1640 @ 320, RGBX_8888, backlight `sprd_backlight` (max 255) |
+| Storage | f2fs `/data` with FBE, EROFS read-only system partitions, dynamic `super` |
+| Stock | Android 16 (SDK 36), kernel 5.15.189-android13-8 GKI |
+| Bootloader | unlocked, required for flashing |
+| Branch | `fox-14.1` (OrangeFox 14.1) |
 
-## Checks
+## Feature checklist
 
-Status reflects `twrp-12.1` HEAD (ramdisk: TWRP 3.7.1_12). `[?]` = not yet
-verified on device.
+`[x]` verified on device. `[~]` in the current build, unverified. `[ ]`
+untested. `[!]` not possible.
 
-### Blocking checks
+### Boot and display
 
-- [x] Correct screen/recovery size (720x1640 @ 320, DRM graphics)
-- [x] Working touch, screen
-- [?] Backup to internal/microSD
-- [?] Restore from internal/microSD
-- [x] Reboot to system (BCB cleared via Android-format fstab + vendor fstab)
-- [x] ADB (gadget bound for `mtp,adb`; adb out of the box)
+- [x] Recovery boots from a flashed `vendor_boot.img`
+- [x] Display 720x1640 over DRM (legacy page flip, atomic commit hangs on SPRD)
+- [x] Touch input (`zte_tpd.ko`, loaded with the vendor modules)
+- [x] Backlight slider (`sprd_backlight`, max 255)
+- [x] Screen never blanks or times out (`TW_NO_SCREEN_TIMEOUT`)
+- [~] Idle CPU: poll blocks 5 ms instead of busy-spinning a frame per render
+- [~] GUI frame rate 120 (`TW_FRAMERATE`)
+- [~] Additions list scroll range
+- [ ] Screenshot
+- [!] Flashlight, no torch node in the kernel
 
-### Medium checks
+### Encryption and data
 
-- [x] update.zip sideload (RC=0 verified)
-- [x] UI colors (no inversion)
-- [x] Screen goes off and on (power → swipe-to-unlock; display does not fully blank)
-- [x] F2FS/EXT4 support (metadata f2fs, cache ext4); exFAT/NTFS [?]
-- [x] All important partitions listed in mount/backup lists (system, vendor,
-      product, odm, dlkms, boot, etc.)
-- [?] Backup/restore to/from external storage
-- [?] Backup/restore to/from adb
-- [ ] Decrypt /data - metadata FBE. keymint TA confirmed alive in recovery
-      (trusty v2.1.1, `com.android.trusty.keymaster` answers); decrypt build in
-      flight. gatekeeper TA absent, not needed for DE-key unwrap.
+- [x] `/data` decrypt with the screen lock PIN (FBE, keymint + gatekeeper via TEE)
+- [x] f2fs `/data` mounted with the stock inlinecrypt options
+- [~] Cold boot decrypt without manual steps
+- [ ] Format data
+- [ ] Encrypted backup (`TW_EXCLUDE_ENCRYPTED_BACKUPS` not set)
+
+### Partitions and storage
+
+- [x] 43 entries in the mount and backup lists, all modem/DSP and boot control
+      partitions included
+- [x] 41 fstab entries: erofs and ext4 system side, f2fs metadata and data
+- [x] microSD as removable storage (vfat, `mmcblk1p1`)
+- [x] 161 vendor kernel modules shipped, 156 loaded by recovery
+- [x] NTFS mount support (`ntfs3.ko` is in the load list)
+- [ ] microSD format and partition
+- [ ] exFAT, no module in the shipped set and kernel support unknown
+- [ ] USB OTG storage
+
+### Backup and restore
+
+- [ ] Backup to `/data`
+- [ ] Backup to microSD
+- [ ] Restore from either location
+- [ ] MD5 verification after backup
+- [ ] Backup over adb
+
+### Flash and install
+
+- [x] Install zip sideload
+- [x] Install image picker: boot, vendor_boot, dtbo, vbmeta, vbmeta_system,
+      vbmeta_vendor, super
+- [x] Format skips secure erase (`BOARD_SUPPRESS_SECURE_ERASE`)
+- [ ] Format all selected partitions
+
+### USB
+
+- [x] adb
+- [ ] MTP, not enabled in BoardConfig
+- [ ] USB mass storage, no lun on the gadget
+- [ ] USB OTG keyboard and mouse
+
+### Power and hardware
+
+- [x] Battery level and temperature (healthd)
+- [~] Vibrator (evdev FF_RUMBLE, `sc27xx-vibra.ko`); FF verified on device, UI
+      untested
 - [x] Correct date
-
-### Minor checks
-
-- [ ] MTP export (adb-only gadget for now)
-- [?] Reboot to bootloader
 - [x] Reboot to recovery
-- [?] Poweroff
-- [x] Battery level (healthd)
-- [x] Temperature (healthd)
-- [ ] Encrypted backups (`TW_EXCLUDE_ENCRYPTED_BACKUPS`)
-- [?] Input devices via USB OTG (keyboard/mouse/storage)
-- [ ] USB mass storage export (no `mass_storage.0` lun)
-- [x] Set brightness (`/sys/class/backlight/sprd_backlight`)
-- [ ] Vibrate (no `timed_output/vibrator` node)
-- [?] Screenshot
-- [?] Partition SD card
-- [x] Fastbootd (`TW_INCLUDE_FASTBOOTD`)
+- [x] Reboot to system
+- [x] Fastbootd
+- [ ] Reboot to bootloader
+- [ ] Poweroff
+
+### Tools
+
+- [x] Terminal and logcat inside recovery
+- [x] resetprop, avbctl, zstd, repack tools
+- [x] APEX packages excluded, our own ueventd handles USB nodes
+
+## Known issues
+
+- `recovery.log` repeats `Is_Mounted: Unable to find partition for path
+  '/storage/sdcard0'`. Harmless, cause not identified.
+- `fastboot boot vendor_boot.img` does not work here. The Unisoc bootloader
+  only fastboots boot images, so recovery has to be flashed.
 
 ## Build
 
-Dispatch the **Recovery Build** workflow from the Actions tab
-(`workflow_dispatch`), build on a VPS with `./build-local.sh` (no sudo
-needed), or build manually:
+Dispatch the **OrangeFox Build** workflow from the Actions tab
+(`workflow_dispatch`), or run it from the CLI:
 
 ```bash
-repo init --depth=1 -u https://github.com/minimal-manifest-twrp/platform_manifest_twrp_aosp.git -b twrp-12.1
-repo sync -j$(nproc) --force-sync
-git clone https://github.com/XTENSEI/android_device_nubia_Z2577 -b twrp-12.1 device/nubia/Z2577
-source build/envsetup.sh
-export ALLOW_MISSING_DEPENDENCIES=true
-lunch twrp_Z2577-eng
-make vendorbootimage -j$(nproc)
+gh workflow run "OrangeFox Build" -R XTENSEI/android_device_nubia_Z2577 \
+  --ref fox-14.1 \
+  -f DEVICE_TREE_URL=https://github.com/XTENSEI/android_device_nubia_Z2577 \
+  -f DEVICE_TREE_BRANCH=fox-14.1 \
+  -f DEVICE_PATH=device/nubia/Z2577 \
+  -f DEVICE_NAME=Z2577 \
+  -f BUILD_TARGET=vendor_boot
 ```
 
-The recovery ramdisk lives in `vendor_boot.img`.
+`--ref fox-14.1` matters: the repository default branch is the historical
+`twrp-12.1` line.
+
+To build by hand, sync the OrangeFox 14.1 sources first:
+
+```bash
+orangefox_sync.sh -b 14.1
+source build/envsetup.sh
+export ALLOW_MISSING_DEPENDENCIES=true
+lunch twrp_Z2577-ap2a-eng
+mka adbd vendorbootimage -j$(nproc)
+```
+
+`patches/` is copied over the synced tree before the build. CI greps the
+result, so a patch that does not land fails the build. Artifacts:
+`vendor_boot.img`, plus the OrangeFox img, zip and md5.
 
 ## Install
 
+Back up the stock `vendor_boot.img` first: recovery lives in that partition, so
+flashing over it removes stock recovery.
+
 ```bash
 adb reboot bootloader
-fastboot flash vendor_boot vendor_boot.img
+fastboot flash vendor_boot out/target/product/Z2577/vendor_boot.img
 fastboot reboot
 ```
 
-To boot without flashing:
+Going back to stock:
 
 ```bash
-fastboot boot vendor_boot.img
+fastboot flash vendor_boot stock-vendor_boot.img
+fastboot reboot
 ```
 
 ## Credits
 
-- [TeamWin Recovery Project](https://github.com/TeamWin)
-- [Massatriof16](https://github.com/Massatriof16) - reference Unisoc trees
-  (kl4, P671L) and the Action-Recovery-Builder workflow
-- [MIO-KITCHEN](https://github.com/AKUBI-LT0/MIO-KITCHEN) - stock image
-  extraction
+- [OrangeFox](https://gitlab.com/OrangeFox) - recovery 14.1
+- [TeamWin Recovery Project](https://github.com/TeamWin) - minuitwrp GUI and
+  the recovery toolset
+- [Massatriof16](https://github.com/Massatriof16) - the Unisoc UMS9230
+  reference trees and the Action-Recovery-Builder workflow
