@@ -46,7 +46,8 @@ Bootloader | must be unlocked
 - [ ] Backup to microSD
 - [ ] Restore from microSD
 - [ ] microSD format and partition
-- [ ] exFAT card, no module in the build
+- [?] exFAT card, the kernel has exFAT built in and TWRP probes the card before
+      mounting, verify on device
 - [ ] USB OTG storage
 
 ## Minor checks
@@ -59,7 +60,8 @@ Bootloader | must be unlocked
 - [ ] Reboot to bootloader
 - [ ] Poweroff
 - [ ] USB mass storage
-- [ ] MTP export
+- [?] MTP, compiled in and the server starts, but it fails on the legacy
+      `/dev/mtp_usb` node which this kernel does not provide
 - [!] Flashlight, no torch node in the kernel
 
 # Clone
