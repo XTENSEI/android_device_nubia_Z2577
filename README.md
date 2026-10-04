@@ -60,8 +60,9 @@ Bootloader | must be unlocked
 - [ ] Reboot to bootloader
 - [ ] Poweroff
 - [ ] USB mass storage
-- [?] MTP, compiled in and the server starts, but it fails on the legacy
-      `/dev/mtp_usb` node which this kernel does not provide
+- [?] MTP, compiled in and the server starts, but the kernel has no ffs_mtp so
+      neither `/dev/mtp_usb` nor `/dev/usb-ffs/mtp/ep0` ever appears.
+      `start_mtp.sh` loads a vendor module if one turns up. `adb pull` works
 - [!] Flashlight, no torch node in the kernel
 
 # Clone

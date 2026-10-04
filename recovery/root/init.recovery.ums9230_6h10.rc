@@ -55,6 +55,15 @@ service storage-proxies /system/bin/start_storage_proxies.sh
     group root
     seclabel u:r:recovery:s0
 
+# no ffs_mtp in this kernel, look for a vendor module that registers the
+# function before the GUI can start MTP
+service mtp-probe /system/bin/start_mtp.sh
+    oneshot
+    disabled
+    user root
+    group root
+    seclabel u:r:recovery:s0
+
 # TEE secure-storage proxies (stock storageproxyd_android.rc, class core in
 # normal boot): the gatekeeper TA reads its failure records through them.
 # start_storage_proxies.sh starts them once /data and prodnv are mounted.
@@ -96,3 +105,4 @@ on property:ro.crypto.state=unsupported || property:ro.crypto.state=unencrypted 
 
 on boot
     start health-hal-2-1
+    start mtp-probe
