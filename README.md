@@ -1,161 +1,115 @@
 # OrangeFox device tree for Nubia V80 Max (Z2577)
 
-OrangeFox/TWRP device tree for the Nubia V80 Max (Z2577). The recovery binary
-is packed into `vendor_boot.img`.
+OrangeFox 14.1 recovery for the Nubia V80 Max. The recovery binary is packed into
+`vendor_boot.img`, so this tree builds `vendorbootimage`.
 
-| | |
-|---|---|
-| Device | Nubia V80 Max, codename Z2577 |
-| SoC | Unisoc T7250 (UMS9230), board `ums9230_6h10` |
-| Screen | 720x1640 @ 320, RGBX_8888, backlight `sprd_backlight` (max 255) |
-| Storage | f2fs `/data` with FBE, EROFS read-only system partitions, dynamic `super` |
-| Stock | Android 16 (SDK 36), kernel 5.15.189-android13-8 GKI |
-| Bootloader | unlocked, required for flashing |
-| Branch | `fox-14.1` (OrangeFox 14.1) |
+# Device specifications
 
-## Feature checklist
+Basic | Spec sheet
+----: | ----
+Device | Nubia V80 Max
+Model | Z2577, stock product name `P615F02`
+SoC | Unisoc T7250 (UMS9230), board `ums9230_6h10`
+Display | 720 x 1640, 320 dpi
+Storage | 256 GB, f2fs `/data` with FBE, EROFS read-only partitions, dynamic `super`
+Android | 16 (SDK 36), kernel 5.15.189-android13-8
+Bootloader | must be unlocked
 
-`[x]` verified on device. `[~]` in the current build, unverified. `[ ]`
-untested. `[!]` not possible.
+# Checks
 
-### Boot and display
+`[✔]` works on device, `[?]` in the build but unverified, `[ ]` untested,
+`[!]` not possible on this device.
 
-- [x] Recovery boots from a flashed `vendor_boot.img`
-- [x] Display 720x1640 over DRM (legacy page flip, atomic commit hangs on SPRD)
-- [x] Touch input (`zte_tpd.ko`, loaded with the vendor modules)
-- [x] Backlight slider (`sprd_backlight`, max 255)
-- [x] Screen never blanks or times out (`TW_NO_SCREEN_TIMEOUT`)
-- [~] Idle CPU: poll blocks 5 ms instead of busy-spinning a frame per render
-- [~] GUI frame rate 120 (`TW_FRAMERATE`)
-- [~] Additions list scroll range
-- [ ] Screenshot
-- [!] Flashlight, no torch node in the kernel
+## Blocking checks
 
-### Encryption and data
-
-- [x] `/data` decrypt with the screen lock PIN (FBE, keymint + gatekeeper via TEE)
-- [x] f2fs `/data` mounted with the stock inlinecrypt options
-- [~] Cold boot decrypt without manual steps
+- [✔] Correct screen/recovery size
+- [✔] Working touch, screen
+- [✔] Decrypt `/data` with the screen lock PIN
+- [✔] Reboot to recovery
+- [✔] Reboot to system
+- [✔] ADB
+- [✔] Correct date
+- [✔] Battery level and temperature
+- [ ] Backup to internal
+- [ ] Restore from internal
 - [ ] Format data
-- [ ] Encrypted backup (`TW_EXCLUDE_ENCRYPTED_BACKUPS` not set)
 
-### Partitions and storage
+## Medium checks
 
-- [~] 50 twrp.flags entries, 49 of them with `backup=1` and `flashimg=1`,
-      covering every stock Unisoc partition: boot chain, vbmeta sets, modem and
-      NV, boot control. `/super` is added by TWRP itself from the logical
-      volumes, a second entry would be listed twice
-- [x] 41 fstab entries: erofs and ext4 system side, f2fs metadata and data
-- [x] microSD as removable storage (vfat, `mmcblk1p1`)
-- [x] 161 vendor kernel modules shipped, 156 loaded by recovery
-- [x] NTFS mount support (`ntfs3.ko` is in the load list)
+- [✔] update.zip sideload
+- [?] Every partition listed in the mount and backup lists
+- [?] Cold boot decrypt with no manual steps
+- [?] Vibrator in the UI (evdev FF_RUMBLE verified with the test binary)
+- [✔] microSD mounted as removable storage
+- [✔] NTFS mount support
+- [ ] Backup to microSD
+- [ ] Restore from microSD
 - [ ] microSD format and partition
-- [ ] exFAT, no module in the shipped set and kernel support unknown
+- [ ] exFAT card, no module in the build
 - [ ] USB OTG storage
 
-### Backup and restore
+## Minor checks
 
-- [ ] Backup to `/data`
-- [ ] Backup to microSD
-- [ ] Restore from either location
-- [ ] MD5 verification after backup
-- [ ] Backup over adb
-
-### Flash and install
-
-- [x] Install zip sideload
-- [~] Install image picker covers all 49 flashimg entries plus super. Slot-only
-      partitions (`init_boot`, `dtb`, `logo`, `vbmeta_odm` and friends) carry
-      `slotselect`, TWRP appends the active slot suffix
-- [x] Format skips secure erase (`BOARD_SUPPRESS_SECURE_ERASE`)
-- [ ] Format all selected partitions
-
-### USB
-
-- [x] adb
-- [ ] MTP, not enabled in BoardConfig
-- [ ] USB mass storage, no lun on the gadget
-- [ ] USB OTG keyboard and mouse
-
-### Power and hardware
-
-- [x] Battery level and temperature (healthd)
-- [~] Vibrator (evdev FF_RUMBLE, `sc27xx-vibra.ko`); FF verified on device, UI
-      untested
-- [x] Correct date
-- [x] Reboot to recovery
-- [x] Reboot to system
-- [x] Fastbootd
+- [✔] Screen never blanks
+- [✔] Brightness slider
+- [✔] Terminal and logcat
+- [✔] Fastbootd
+- [ ] Screenshot
 - [ ] Reboot to bootloader
 - [ ] Poweroff
+- [ ] USB mass storage
+- [ ] MTP export
+- [!] Flashlight, no torch node in the kernel
 
-### Tools
+# Clone
 
-- [x] Terminal and logcat inside recovery
-- [x] resetprop, avbctl, zstd, repack tools
-- [x] APEX packages excluded, our own ueventd handles USB nodes
+    git clone -b fox-14.1 https://github.com/XTENSEI/android_device_nubia_Z2577 device/nubia/Z2577
 
-## Known issues
+# Build
 
-- `recovery.log` repeats `Is_Mounted: Unable to find partition for path
-  '/storage/sdcard0'`. Harmless, cause not identified.
-- `fastboot boot vendor_boot.img` does not work here. The Unisoc bootloader
-  only fastboots boot images, so recovery has to be flashed.
+Sync the OrangeFox 14.1 sources first, then build:
 
-## Build
+    orangefox_sync.sh -b 14.1
+    export ALLOW_MISSING_DEPENDENCIES=true
+    . build/envsetup.sh
+    lunch twrp_Z2577-ap2a-eng
+    mka adbd vendorbootimage
 
-Dispatch the **OrangeFox Build** workflow from the Actions tab
-(`workflow_dispatch`), or run it from the CLI:
+The 3-part lunch name is required, the 14.x envsetup rejects `twrp_Z2577-eng`.
 
-```bash
-gh workflow run "OrangeFox Build" -R XTENSEI/android_device_nubia_Z2577 \
-  --ref fox-14.1 \
-  -f DEVICE_TREE_URL=https://github.com/XTENSEI/android_device_nubia_Z2577 \
-  -f DEVICE_TREE_BRANCH=fox-14.1 \
-  -f DEVICE_PATH=device/nubia/Z2577 \
-  -f DEVICE_NAME=Z2577 \
-  -f BUILD_TARGET=vendor_boot
-```
+Or build it from the Actions tab, **OrangeFox Build**, `workflow_dispatch`:
 
-`--ref fox-14.1` matters: the repository default branch is the historical
-`twrp-12.1` line.
+    gh workflow run "OrangeFox Build" -R XTENSEI/android_device_nubia_Z2577 \
+      --ref fox-14.1 \
+      -f DEVICE_TREE_URL=https://github.com/XTENSEI/android_device_nubia_Z2577 \
+      -f DEVICE_TREE_BRANCH=fox-14.1 \
+      -f DEVICE_PATH=device/nubia/Z2577 \
+      -f DEVICE_NAME=Z2577 \
+      -f BUILD_TARGET=vendor_boot
 
-To build by hand, sync the OrangeFox 14.1 sources first:
+# Flash
 
-```bash
-orangefox_sync.sh -b 14.1
-source build/envsetup.sh
-export ALLOW_MISSING_DEPENDENCIES=true
-lunch twrp_Z2577-ap2a-eng
-mka adbd vendorbootimage -j$(nproc)
-```
+Keep a copy of the stock `vendor_boot.img` first, recovery lives there.
+`fastboot boot` does not work on this SoC, the Unisoc bootloader only fastboots
+boot images, so recovery has to be flashed.
 
-`patches/` is copied over the synced tree before the build. CI greps the
-result, so a patch that does not land fails the build. Artifacts:
-`vendor_boot.img`, plus the OrangeFox img, zip and md5.
+    adb reboot bootloader
+    fastboot flash vendor_boot out/target/product/Z2577/vendor_boot.img
+    fastboot reboot
 
-## Install
+Going back to stock is the same command with the stock image.
 
-Back up the stock `vendor_boot.img` first: recovery lives in that partition, so
-flashing over it removes stock recovery.
+# Notes
 
-```bash
-adb reboot bootloader
-fastboot flash vendor_boot out/target/product/Z2577/vendor_boot.img
-fastboot reboot
-```
+- `patches/` holds full source files copied over the synced tree, the workflow
+  greps each one so a patch that does not land fails the build.
+- OrangeFox forces the logical partitions (system, vendor, product, odm,
+  system_ext, the dlkm pair) to non-backupable and puts `super` in their place.
+  Backing up super covers all of them.
 
-Going back to stock:
-
-```bash
-fastboot flash vendor_boot stock-vendor_boot.img
-fastboot reboot
-```
-
-## Credits
+# References
 
 - [OrangeFox](https://gitlab.com/OrangeFox) - recovery 14.1
-- [TeamWin Recovery Project](https://github.com/TeamWin) - minuitwrp GUI and
-  the recovery toolset
-- [Massatriof16](https://github.com/Massatriof16) - the Unisoc UMS9230
-  reference trees and the Action-Recovery-Builder workflow
+- [TeamWin Recovery Project](https://github.com/TeamWin) - minuitwrp GUI
+- [Massatriof16](https://github.com/Massatriof16) - Unisoc UMS9230 reference
+  trees and the Actions recovery builder
