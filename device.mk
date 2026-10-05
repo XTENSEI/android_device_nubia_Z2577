@@ -6,6 +6,10 @@
 
 LOCAL_PATH := device/nubia/Z2577
 
+# OrangeFox About page, read by orangefox.mk into the OF_MAINTAINER macro.
+# Without this the page shows the "Testing build (unofficial)" fallback.
+OF_MAINTAINER := XTENSEI
+
 # Enable Virtual A/B OTA
 ENABLE_VIRTUAL_AB := true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/launch_with_vendor_ramdisk.mk)
