@@ -86,6 +86,7 @@ int select_fd = 0;
 static int gRecorder = -1;
 
 static long long g_suppress_power_toggle_until_ms = 0;
+static long long g_touch_down_ms = 0; // start of the current touch, for tap feedback
 static inline long long nowMs() { struct timeval t; gettimeofday(&t, NULL); return (long long)t.tv_sec * 1000LL + t.tv_usec / 1000; }
 
 extern "C" void gr_write_frame_to_file(int fd);
@@ -398,6 +399,7 @@ void InputHandler::doTouchStart()
 		state = AS_IN_ACTION_AREA;
 	touch_status = TS_TOUCH_AND_HOLD;
 	gettimeofday(&touchStart, NULL);
+	g_touch_down_ms = nowMs();
 }
 
 void InputHandler::process_EV_ABS(input_event& ev)
@@ -419,6 +421,10 @@ void InputHandler::process_EV_ABS(input_event& ev)
 		if (state == AS_IN_ACTION_AREA)
 		{
 			LOGEVENT("TOUCH_RELEASE: %d,%d\n", x, y);
+			/* Optional tap feedback: quick touches only, and only when
+			 * tw_touch_vibrate is non-zero. */
+			if (nowMs() - g_touch_down_ms <= 350)
+				DataManager::Vibrate("tw_touch_vibrate");
 			PageManager::NotifyTouch(TOUCH_RELEASE, x, y);
 		}
 		touch_status = TS_NONE;
