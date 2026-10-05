@@ -11,9 +11,7 @@
 #	See <http://www.gnu.org/licenses/>.
 #
 
-# NOT inherited by twrp_Z2577.mk, so nothing here reaches the build.
-# The theme runs on the OrangeFox defaults plus recovery/root/twres overrides.
-# OF_MAINTAINER is set in device.mk instead.
+# Not inherited, OF_MAINTAINER is in device.mk
 OF_SCREEN_H := 1640
 OF_STATUS_H := 84
 OF_HIDE_NOTCH := 1

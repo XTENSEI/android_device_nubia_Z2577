@@ -6,8 +6,7 @@
 
 LOCAL_PATH := device/nubia/Z2577
 
-# OrangeFox About page, read by orangefox.mk into the OF_MAINTAINER macro.
-# Without this the page shows the "Testing build (unofficial)" fallback.
+# OrangeFox About page
 OF_MAINTAINER := XTENSEI
 
 # Enable Virtual A/B OTA
