@@ -115,6 +115,10 @@ jobs:
         grep -q 'define TW_FRAMERATE 120' bootable/recovery/gui/objects.hpp
         grep -q 'y="%row6_1_y%"' bootable/recovery/gui/theme/portrait_hdpi/pages/install.xml
         grep -q 'name every logical volume inside super' bootable/recovery/partitionmanager.cpp
+        grep -q 'weak_magnitude' bootable/recovery/minuitwrp/events.cpp
+        grep -q 'tw_touch_vibrate' bootable/recovery/gui/gui.cpp
+        grep -q 'tw_touch_vibrate' bootable/recovery/gui/theme/portrait_hdpi/pages/settings.xml
+        grep -q 'vibrate(action_vib)' bootable/recovery/data.cpp
 
     - name: Fix CTS release version check
       run: |
