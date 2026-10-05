@@ -72,17 +72,12 @@ MTP and USB mass storage are out: this kernel has no `f_mtp` and no
     lunch twrp_Z2577-ap2a-eng
     mka adbd vendorbootimage
 
-The 3-part lunch name is required. Recovery goes into `vendor_boot.img`, keep the
-stock one, `fastboot boot` does not work on this SoC.
-
-    fastboot flash vendor_boot out/target/product/Z2577/vendor_boot.img
-
-## About
-
-Unofficial build. `patches/` holds full source files copied over the synced tree
-and the workflow greps every one of them.
-
 ## Resources
 
-- [OrangeFox](https://gitlab.com/OrangeFox)
-- [TeamWin Recovery Project](https://github.com/TeamWin)
+- [OrangeFox](https://gitlab.com/OrangeFox) - the recovery this is built from
+- [TeamWin Recovery Project](https://github.com/TeamWin) - minuitwrp GUI base
+- [Android Open Source Project](https://github.com/aosp-mirror/platform) - the platform tree
+- [Massatriof16](https://github.com/Massatriof16) - Unisoc UMS9230 reference trees,
+  [P671L](https://github.com/Massatriof16/P671L) for the board, and the
+  [recovery builder workflow](https://github.com/Massatriof16/Action-Recovery-Builder) this CI forks
+- [naden01](https://github.com/naden01) - TWRP device trees, the layout of this README
