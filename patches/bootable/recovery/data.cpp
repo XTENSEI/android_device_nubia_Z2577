@@ -1731,7 +1731,6 @@ void DataManager::Leds(bool enable)
   blink1 = leds1 + "/blink";
   bsmax1 = leds1 + "/max_brightness";
 
-  string vibrate_path = "/sys/class/timed_output/vibrator/enable";
   DataManager::GetValue("tw_action_vibrate", install_vibrate_value);
   DataManager::GetValue("fox_led_color", ledcolor);
 
@@ -1749,6 +1748,14 @@ void DataManager::Leds(bool enable)
     }
   else
     {
+      if (enable)
+        {
+          // no timed_output node on this device: use the evdev FF vibrator
+          int action_vib = atoi(install_vibrate_value.c_str());
+          if (action_vib > 0)
+            vibrate(action_vib);
+        }
+
       if (stat(bs.c_str(), &st) == 0 && stat(time.c_str(), &st) == 0
 	  && stat(bsmax.c_str(), &st) == 0 && stat(blink.c_str(), &st) == 0)
 	{
@@ -1764,7 +1771,6 @@ void DataManager::Leds(bool enable)
           TWFunc::write_to_file("/sys/class/leds/red/blink", "1");
           TWFunc::write_to_file("/sys/class/leds/red/led_time", "1 1 1 1");
         }
-        TWFunc::write_to_file(vibrate_path, install_vibrate_value);
 	    }
 	}
     }
@@ -1802,6 +1808,14 @@ void DataManager::Leds(bool enable)
     }
   else
     {
+      if (enable)
+        {
+          // no timed_output node on this device: use the evdev FF vibrator
+          int action_vib = atoi(install_vibrate_value.c_str());
+          if (action_vib > 0)
+            vibrate(action_vib);
+        }
+
       if (stat(bs.c_str(), &st) == 0 && stat(bsmax.c_str(), &st) == 0) {
         if (stat(time.c_str(), &st) == 0 && stat(blink.c_str(), &st) == 0)
         {
