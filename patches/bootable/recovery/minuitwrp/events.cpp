@@ -209,6 +209,9 @@ int vibrate(int timeout_ms)
         effect.type = FF_RUMBLE;
         effect.id = ff_effect_id;
         effect.u.rumble.strong_magnitude = 0xc000;
+        /* sc27xx_vibra_play() reads weak_magnitude only; strong alone is
+         * a silent no-op on this PMIC. Verified live with a test binary. */
+        effect.u.rumble.weak_magnitude = 0xc000;
         if (ioctl(ff_fd, EVIOCSFF, &effect) == 0) {
             struct input_event play;
             ff_effect_id = effect.id;
