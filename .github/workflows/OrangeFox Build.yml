@@ -119,6 +119,7 @@ jobs:
         grep -q 'tw_touch_vibrate' bootable/recovery/gui/gui.cpp
         grep -q 'tw_touch_vibrate' bootable/recovery/gui/theme/portrait_hdpi/pages/settings.xml
         grep -q 'vibrate(action_vib)' bootable/recovery/data.cpp
+        grep -q 'Find_Led_Path' bootable/recovery/data.cpp
 
     - name: Fix CTS release version check
       run: |
