@@ -3,16 +3,31 @@
 #
 # MTP cannot work on this kernel (no ffs_mtp anywhere), so this is the file
 # transfer path: the phone gets usb0 on 192.168.42.129/24 and the PC takes a
-# matching address, then adb over TCP works over the same cable. ffs.adb stays
-# linked, so the running USB adb session survives.
+# matching address, then files move over the link.
 #
-# Start it by hand from a USB adb session:
-#     adb shell /system/bin/start_rndis.sh
-# or:  adb shell setprop sys.usb.rndis 1
+# Start it with:
+#     adb shell setprop sys.usb.rndis 1
+# or run this script directly; when launched from the adb shell it re-execs
+# itself with nohup first, because the UDC unbind below drops USB and adbd
+# can kill the shell it spawned.
+#
+# configfs refuses to link a function while the gadget is bound (EINVAL,
+# kernel configfs.c config_usb_cfg_link), so the flow has to be:
+# unbind UDC, link rndis.gs4, bind UDC again. ffs.adb stays linked, so the
+# USB adb session comes back after the rebind.
 #
 # PC side (no DHCP server exists in the recovery ramdisk):
 #     ip addr add 192.168.42.100/24 dev enxXXXX   # linux
 #     adb connect 192.168.42.129:5555
+
+# Detach when we are not an init child: PPID 1 means the rc service started
+# us, anything else means a shell that the USB drop may take down with it.
+if [ "$PPID" != "1" ] && [ "${RNDIS_DETACHED:-0}" != "1" ]; then
+    RNDIS_DETACHED=1
+    export RNDIS_DETACHED
+    nohup "$0" "$@" >/dev/null 2>&1 &
+    exit 0
+fi
 
 LOG=/tmp/start_rndis.log
 exec > "$LOG" 2>&1
@@ -26,6 +41,7 @@ echo "start, UDC=${UDC}"
 
 mount -t configfs none /config 2>/dev/null
 [ -d "$G/functions" ] || { echo "no configfs gadget, aborting"; exit 0; }
+[ -z "$UDC" ] && UDC=$(cat "$G/UDC")
 
 # the rndis function is a vendor module, it is not in TW_LOAD_VENDOR_MODULES
 if ! ls "$G/functions" | grep -q '^rndis'; then
@@ -57,30 +73,57 @@ echo "rndis function is $FN"
 
 mkdir -p "$G/configs/b.1"
 
-USED=$(ls "$G/configs/b.1" 2>/dev/null | grep -c '^f[0-9]*$')
-if [ "$USED" = "0" ]; then
-    # nothing was linked yet, put adb back so the session we run from survives
-    ln -s "$G/functions/ffs.adb" "$G/configs/b.1/f1" 2>/dev/null
-    echo "relinked ffs.adb as f1"
+LINKED=""
+for f in "$G/configs/b.1"/f*; do
+    [ -L "$f" ] || continue
+    case "$(readlink "$f")" in
+        */"$FN") LINKED="${f##*/}"; break ;;
+    esac
+done
+
+if [ -n "$LINKED" ]; then
+    echo "rndis already linked as $LINKED, skipping the rebind"
+else
+    # nothing was linked yet? put adb back so the session comes back
+    if ! ls "$G/configs/b.1" | grep -q '^f[0-9]*$'; then
+        ln -s "$G/functions/ffs.adb" "$G/configs/b.1/f1" 2>/dev/null
+        echo "relinked ffs.adb as f1"
+    fi
+
+    SLOT=""
+    i=1
+    while [ $i -le 11 ]; do
+        [ -e "$G/configs/b.1/f$i" ] || { SLOT=$i; break; }
+        i=$((i + 1))
+    done
+    if [ -z "$SLOT" ]; then
+        echo "no free config slot, nothing to do"
+    else
+        # an empty write is a no-op, configfs only unbinds on a real value
+        echo "unbinding UDC"
+        echo none > "$G/UDC"
+        echo "UDC now: $(cat "$G/UDC")"
+
+        ln -s "$G/functions/$FN" "$G/configs/b.1/f$SLOT"
+        echo "rndis linked as f$SLOT, config now: $(ls "$G/configs/b.1" | tr '\n' ' ')"
+
+        echo "$UDC" > "$G/UDC" || echo "writing UDC failed"
+        if [ -z "$(cat "$G/UDC")" ]; then
+            # rebind refused, put the adb-only config back so USB returns
+            echo "rebind failed, restoring the adb-only config"
+            rm -f "$G/configs/b.1/f$SLOT"
+            echo "$UDC" > "$G/UDC"
+        fi
+        echo "UDC rebound: $(cat "$G/UDC")"
+    fi
 fi
 
-SLOT=""
-i=1
-while [ $i -le 11 ]; do
-    [ -e "$G/configs/b.1/f$i" ] || { SLOT=$i; break; }
-    i=$((i + 1))
-done
-[ -z "$SLOT" ] && { echo "no free config slot, aborting"; exit 0; }
-
-ln -sf "$G/functions/$FN" "$G/configs/b.1/f$SLOT"
-echo "rndis linked as f$SLOT, config now: $(ls "$G/configs/b.1" | tr '\n' ' ')"
-
-# a bound gadget cannot change its function list, unbind and bind again
-cat "$G/UDC" > /tmp/rndis_udc_before
-echo "UDC was $(cat /tmp/rndis_udc_before)"
-printf '' > "$G/UDC" 2>/dev/null
-echo "${UDC}" > "$G/UDC" 2>&1 || echo "writing UDC failed"
-echo "UDC rebound"
+# adbd loses its functionfs endpoints across the rebind; restart it so USB
+# adb comes back even when the old session did not survive (ignored when
+# this recovery has no adbd service). The TCP port makes the same adbd
+# reachable over the link, so the PC can adb connect 192.168.42.129:5555.
+setprop service.adb.tcp.port 5555
+setprop ctl.restart adbd 2>&1
 
 i=0
 while [ $i -lt 20 ]; do
@@ -90,13 +133,11 @@ while [ $i -lt 20 ]; do
 done
 
 if [ -e /sys/class/net/usb0 ]; then
-    if ifconfig usb0 "$PHONE_IP" netmask 255.255.255.0 up 2>&1; then
-        echo "usb0 configured with ifconfig"
-    else
-        ip addr add "${PHONE_IP}/${PREFIX}" dev usb0 2>&1
-        ip link set usb0 up 2>&1
-    fi
+    # the ramdisk has toybox ifconfig only, there is no ip(8) in recovery
+    ifconfig usb0 "$PHONE_IP" netmask 255.255.255.0 up 2>&1
+    echo "ifconfig rc=$?"
     echo "usb0 operstate $(cat /sys/class/net/usb0/operstate)"
+    ifconfig usb0 2>&1
     echo "PC: ip addr add 192.168.42.100/${PREFIX} dev <enx|usb0>"
     echo "then: adb connect ${PHONE_IP}:5555"
 else
