@@ -40,6 +40,7 @@ Bootloader | must be unlocked
 - [?] Every partition listed in the mount and backup lists
 - [?] Cold boot decrypt with no manual steps
 - [ ] Vibrator in the UI (dead in the flashed build: the FF effect set only strong_magnitude and sc27xx-vibra reads weak_magnitude only; fix 9acba9c, verify on the next build)
+- [ ] Touch tap haptics (tw_touch_vibrate slider on the vibrate page, default off; 012a05d) and install-start feedback (7bd35c3), both need the next build
 - [?] microSD as removable storage, detected and mounted but switching was
       broken before the `/external_sd` fix, verify on the next build
 - [✔] NTFS mount support
