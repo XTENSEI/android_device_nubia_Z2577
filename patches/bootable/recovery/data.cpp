@@ -26,6 +26,7 @@
 #include <fstream>
 #include <cctype>
 #include <cutils/properties.h>
+#include <dirent.h>
 #include <unistd.h>
 #include <private/android_filesystem_config.h>
 #include "variables.h"
@@ -1712,145 +1713,104 @@ void DataManager::Vibrate(const string& varName)
 #endif
 }
 
-#ifdef OF_CLASSIC_LEDS_FUNCTION
-// use R9.x Leds function
-void DataManager::Leds(bool enable)
+// The LED class nodes on this device are named sc27xx:<color>, so resolve the
+// color by scanning /sys/class/leds instead of assuming /sys/class/leds/<color>.
+static std::string Find_Led_Path(const std::string &color)
 {
-  std::string leds, bs, bsmax, time, blink, bsm, leds1, bs1, bsmax1, time1, blink1, bsm1, max_brt, install_vibrate_value;
-  struct stat st;
-  int ledcolor;
-  leds = "/sys/class/leds/green";
-  bs = leds + "/brightness";
-  time = leds + "/led_time";
-  blink = leds + "/blink";
-  bsmax = leds + "/max_brightness";
+  DIR *dir = opendir("/sys/class/leds");
 
-  leds1 = "/sys/class/leds/red";
-  bs1 = leds1 + "/brightness";
-  time1 = leds1 + "/led_time";
-  blink1 = leds1 + "/blink";
-  bsmax1 = leds1 + "/max_brightness";
+  if (dir == nullptr)
+    return "";
 
-  DataManager::GetValue("tw_action_vibrate", install_vibrate_value);
-  DataManager::GetValue("fox_led_color", ledcolor);
+  struct dirent *entry;
+  std::string path;
 
-  if (!TWFunc::Path_Exists("/sys/class/leds/white/brightness"))
+  while ((entry = readdir(dir)) != nullptr)
   {
-    LOGINFO("DEBUG - found white led on /sys/class/leds/white/ path\n");
-    TWFunc::read_file("/sys/class/leds/white/max_brightness", max_brt);
-    TWFunc::write_to_file("/sys/class/leds/white/brightness", max_brt);
+    std::string name = entry->d_name;
+
+    if (name.find(color) == std::string::npos)
+      continue;
+
+    std::string candidate = "/sys/class/leds/" + name;
+
+    if (TWFunc::Path_Exists(candidate + "/brightness"))
+    {
+      path = candidate;
+      break;
+    }
   }
 
-  if (!enable && stat(bs.c_str(), &st) == 0)
-    {
-      TWFunc::write_to_file(bs, "0");
-      TWFunc::write_to_file(bs1, "0");
-    }
-  else
-    {
-      if (enable)
-        {
-          // no timed_output node on this device: use the evdev FF vibrator
-          int action_vib = atoi(install_vibrate_value.c_str());
-          if (action_vib > 0)
-            vibrate(action_vib);
-        }
+  closedir(dir);
 
-      if (stat(bs.c_str(), &st) == 0 && stat(time.c_str(), &st) == 0
-	  && stat(bsmax.c_str(), &st) == 0 && stat(blink.c_str(), &st) == 0)
-	{
-	  if (TWFunc::read_file(bsmax, bsm) == 0)
-	    {
-	      TWFunc::write_to_file(bs, bsmax);
-	      TWFunc::write_to_file(blink, "1");
-        TWFunc::write_to_file(time, "1 1 1 1");
-
-        if (ledcolor == 0) {
-          LOGINFO("Enable Yellow led\n");
-          TWFunc::write_to_file("/sys/class/leds/red/brightness", bsmax);
-          TWFunc::write_to_file("/sys/class/leds/red/blink", "1");
-          TWFunc::write_to_file("/sys/class/leds/red/led_time", "1 1 1 1");
-        }
-	    }
-	}
-    }
+  return path;
 }
-#else
+
+// Blink through the LED class timer trigger, fall back to a steady light. The
+// leds-blink driver nodes the upstream code writes (blink, led_time) are absent.
+static void Set_Led(const std::string &path, bool on)
+{
+  std::string brightness = path + "/brightness";
+  std::string bsm;
+
+  if (path.empty() || !TWFunc::Path_Exists(brightness))
+    return;
+
+  if (!on)
+  {
+    TWFunc::write_to_file(path + "/trigger", "none");
+    TWFunc::write_to_file(brightness, "0");
+    return;
+  }
+
+  if (TWFunc::read_file(path + "/max_brightness", bsm) != 0)
+    return;
+
+  TWFunc::write_to_file(brightness, bsm);
+
+  // the timer trigger owns the brightness once attached, so set it last
+  TWFunc::write_to_file(path + "/trigger", "timer");
+
+  if (TWFunc::Path_Exists(path + "/delay_on"))
+  {
+    TWFunc::write_to_file(path + "/delay_on", "500");
+    TWFunc::write_to_file(path + "/delay_off", "500");
+  }
+  else
+  {
+    // no timer trigger on this LED, keep the steady light
+    TWFunc::write_to_file(path + "/trigger", "none");
+  }
+}
+
+// Both upstream OFox Leds() variants (OF_CLASSIC_LEDS_FUNCTION or not) are the
+// same dead code on this device, so they collapse into one implementation.
 void DataManager::Leds(bool enable)
 {
-  std::string leds, bs, bsmax, time, blink, bsm, leds1, bs1, bsmax1, time1, blink1, bsm1, max_brt, install_vibrate_value;
-  struct stat st;
+  std::string leds, leds1, install_vibrate_value;
   int ledcolor;
-  leds = "/sys/class/leds/green";
-  bs = leds + "/brightness";
-  time = leds + "/led_time";
-  blink = leds + "/blink";
-  bsmax = leds + "/max_brightness";
 
-  leds1 = "/sys/class/leds/red";
-  bs1 = leds1 + "/brightness";
-  time1 = leds1 + "/led_time";
-  blink1 = leds1 + "/blink";
-  bsmax1 = leds1 + "/max_brightness";
+  leds = Find_Led_Path("green");
+  leds1 = Find_Led_Path("red");
 
   DataManager::GetValue("tw_action_vibrate", install_vibrate_value);
   DataManager::GetValue("fox_led_color", ledcolor);
 
-  if (!enable && stat(bs.c_str(), &st) == 0)
-    {
-      TWFunc::write_to_file(bs, "0");
-      TWFunc::write_to_file(bs1, "0");
-      if (TWFunc::Path_Exists("/sys/class/leds/white/brightness"))
-      {
-        LOGINFO("DEBUG - found white led on /sys/class/leds/white/ path\n");
-        TWFunc::write_to_file("/sys/class/leds/white/brightness", "0");
-      }
-    }
-  else
-    {
-      if (enable)
-        {
-          // no timed_output node on this device: use the evdev FF vibrator
-          int action_vib = atoi(install_vibrate_value.c_str());
-          if (action_vib > 0)
-            vibrate(action_vib);
-        }
+  if (!enable)
+  {
+    Set_Led(leds, false);
+    Set_Led(leds1, false);
+    return;
+  }
 
-      if (stat(bs.c_str(), &st) == 0 && stat(bsmax.c_str(), &st) == 0) {
-        if (stat(time.c_str(), &st) == 0 && stat(blink.c_str(), &st) == 0)
-        {
-          if (TWFunc::read_file(bsmax, bsm) == 0)
-            {
-              TWFunc::write_to_file(bs, bsm);
-              TWFunc::write_to_file(blink, "1");
-              TWFunc::write_to_file(time, "1 1 1 1");
+  // no timed_output node on this device: use the evdev FF vibrator
+  int action_vib = atoi(install_vibrate_value.c_str());
 
-              if (ledcolor == 0) {
-                LOGINFO("Enable Yellow led\n");
-                TWFunc::write_to_file("/sys/class/leds/red/brightness", bsm);
-                TWFunc::write_to_file("/sys/class/leds/red/blink", "1");
-                TWFunc::write_to_file("/sys/class/leds/red/led_time", "1 1 1 1");
-              }
-              if (TWFunc::Path_Exists("/sys/class/leds/white/brightness"))
-              {
-                LOGINFO("DEBUG - found white led on /sys/class/leds/white/ path\n");
-                TWFunc::read_file("/sys/class/leds/white/max_brightness", max_brt);
-                TWFunc::write_to_file("/sys/class/leds/white/brightness", max_brt);
-              }
-            }
-        } else {
-        //[f/d] Just turn on led if device doesn't support blinking
-          if (TWFunc::read_file(bsmax, bsm) == 0)
-          {
-            TWFunc::write_to_file(bs, bsm);
+  if (action_vib > 0)
+    vibrate(action_vib);
 
-            if (ledcolor == 0) {
-              TWFunc::write_to_file("/sys/class/leds/red/brightness", bsm);
-            }
-          }
-        }
-      }
-    }
+  Set_Led(leds, true);
+
+  if (ledcolor == 0)
+    Set_Led(leds1, true);
 }
-#endif
-
