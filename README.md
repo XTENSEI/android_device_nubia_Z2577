@@ -81,7 +81,7 @@ That runs `repo init` and `repo sync` on the `aera-16.0` manifest, clones the
 
     repo init -u https://github.com/AERA-Recovery/android_manifest.git -b aera-16.0
     repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc)
-    git clone -b aera-16 https://github.com/XTENSEI/android_device_nubia_Z2577-AERA device/nubia/Z2577
+    git clone -b aera-16 https://github.com/XTENSEI/android_device_nubia_Z2577 device/nubia/Z2577
     export AERA_BUILD_DEVICE=Z2577
     . build/envsetup.sh
     lunch twrp_Z2577-bp2a-eng
