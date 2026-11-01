@@ -72,6 +72,24 @@ MTP and USB mass storage are out: this kernel has no `f_mtp` and no
     lunch twrp_Z2577-ap2a-eng
     mka adbd vendorbootimage
 
+## AERA 16
+
+    scripts/aera-setup.sh ~/android/AERA_16.0
+
+That runs `repo init` and `repo sync` on the `aera-16.0` manifest, clones the
+`aera-16` branch to `device/nubia/Z2577`, and prints the build command. By hand:
+
+    repo init -u https://github.com/AERA-Recovery/android_manifest.git -b aera-16.0
+    repo sync -c --force-sync --no-clone-bundle --no-tags -j$(nproc)
+    git clone -b aera-16 https://github.com/XTENSEI/android_device_nubia_Z2577-AERA device/nubia/Z2577
+    export AERA_BUILD_DEVICE=Z2577
+    . build/envsetup.sh
+    lunch twrp_Z2577-bp2a-eng
+    mka adbd vendorbootimage
+
+The target is `vendorbootimage` on both lines, not `recoveryimage`: this board
+sets `TARGET_NO_RECOVERY` and packs recovery inside vendor_boot.
+
 ## Resources
 
 - [OrangeFox](https://gitlab.com/OrangeFox) - the recovery this is built from
