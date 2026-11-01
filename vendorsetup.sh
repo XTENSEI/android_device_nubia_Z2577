@@ -10,44 +10,52 @@
 #	This software is released under GPL version 3 or any later version.
 #	See <http://www.gnu.org/licenses/>.
 #
+#	Please maintain this if you use this script or any part of it
+#
 FDEVICE="Z2577"
 
-fox_get_target_device() {
+aera_get_target_device() {
 local chkdev=$(echo "$BASH_SOURCE" | grep -w $FDEVICE)
    if [ -n "$chkdev" ]; then
-      FOX_BUILD_DEVICE="$FDEVICE"
+      AERA_BUILD_DEVICE="$FDEVICE"
    else
       chkdev=$(set | grep BASH_ARGV | grep -w $FDEVICE)
-      [ -n "$chkdev" ] && FOX_BUILD_DEVICE="$FDEVICE"
+      [ -n "$chkdev" ] && AERA_BUILD_DEVICE="$FDEVICE"
    fi
 }
 
-if [ -z "$1" -a -z "$FOX_BUILD_DEVICE" ]; then
-   fox_get_target_device
+if [ -z "$1" -a -z "$AERA_BUILD_DEVICE" ]; then
+   aera_get_target_device
 fi
 
-if [ "$1" = "$FDEVICE" -o "$FOX_BUILD_DEVICE" = "$FDEVICE" ]; then
+if [ "$1" = "$FDEVICE" -o "$AERA_BUILD_DEVICE" = "$FDEVICE" ]; then
 	export LC_ALL="C"
-	export FOX_BUILD_DEVICE=Z2577
-	export FOX_AB_DEVICE=1
-	export FOX_VIRTUAL_AB_DEVICE=1
-	export FOX_VANILLA_BUILD=1
-	export FOX_USE_TAR_BINARY=1
-	export FOX_USE_SED_BINARY=1
-	export FOX_USE_GREP_BINARY=1
-	export FOX_USE_BUSYBOX_BINARY=1
-	export FOX_USE_LZ4_BINARY=1
-	export FOX_USE_ZSTD_BINARY=1
-	export FOX_USE_DATE_BINARY=1
-	export FOX_USE_XZ_UTILS=1
-	export FOX_DELETE_AROMAFM=1
-	export FOX_ALLOW_EARLY_SETTINGS_LOAD=1
-	export FOX_USE_UPDATED_MAGISKBOOT=1
-	export FOX_MOVE_MAGISK_INSTALLER_TO_RAMDISK=1
-	export FOX_USE_FSCK_EROFS_BINARY=1
-	export FOX_USE_PATCHELF_BINARY=1
-	export FOX_SETTINGS_ROOT_DIRECTORY=/data/recovery
-	export FOX_MISCELLANEOUS_ROOT_DIRECTORY=/sdcard
-	export FOX_ENABLE_KERNELSU_SUPPORT=1
-	export FOX_BUILD_TYPE=Unofficial
+	export AERA_BUILD_DEVICE=Z2577
+	export AERA_AB_DEVICE=1
+	export AERA_VIRTUAL_AB_DEVICE=1
+	export AERA_VANILLA_BUILD=1
+	export AERA_PRODUCT_PREFIX=AERA
+	export AERA_BUILD_STATUS=Unofficial
+	export AERA_BUILD_TYPE=Beta
+	# recovery is in vendor_boot; AERA_A16.sh also derives this from
+	# BOARD_INCLUDE_RECOVERY_RAMDISK_IN_VENDOR_BOOT
+	export AERA_VENDOR_BOOT_RECOVERY=1
+	export AERA_USE_TAR_BINARY=1
+	export AERA_USE_SED_BINARY=1
+	export AERA_USE_GREP_BINARY=1
+	export AERA_USE_BUSYBOX_BINARY=1
+	export AERA_USE_LZ4_BINARY=1
+	export AERA_USE_ZSTD_BINARY=1
+	export AERA_USE_DATE_BINARY=1
+	export AERA_USE_XZ_UTILS=1
+	export AERA_USE_UPDATED_MAGISKBOOT=1
+	export AERA_USE_FSCK_EROFS_BINARY=1
+	export AERA_USE_PATCHELF_BINARY=1
+	export AERA_USE_DMSETUP=1
+	export AERA_SETTINGS_ROOT_DIRECTORY=/data/recovery
+	export AERA_MISCELLANEOUS_ROOT_DIRECTORY=/sdcard
+	export AERA_ENABLE_ROOT_MANAGER=1
+	# no AERA_ENABLE_MOBILE_DATA: no aera-cellular-provider for this SoC
+	unset AERA_MAINTAINER_PATCH_VERSION
 fi
+#

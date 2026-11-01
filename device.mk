@@ -9,6 +9,9 @@ LOCAL_PATH := device/nubia/Z2577
 # OrangeFox About page
 OF_MAINTAINER := XTENSEI
 
+# AERA settings
+$(call inherit-product, $(LOCAL_PATH)/aera_Z2577.mk)
+
 # Enable Virtual A/B OTA
 ENABLE_VIRTUAL_AB := true
 $(call inherit-product, $(SRC_TARGET_DIR)/product/virtual_ab_ota/launch_with_vendor_ramdisk.mk)
