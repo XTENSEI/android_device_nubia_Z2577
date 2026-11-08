@@ -125,15 +125,22 @@ jobs:
 
     - name: Apply device patches
       run: |
-        # Only the two HIDL patches are overlays. data.cpp and
-        # minuitwrp/graphics_drm.cpp are full-file copies taken from OrangeFox
-        # and would replace AERA's own versions, so they are not applied here.
-        cd workspace/${{ inputs.DEVICE_PATH }}/patches
+        PATCHDIR=$GITHUB_WORKSPACE/workspace/${{ inputs.DEVICE_PATH }}/patches
+        # The two HIDL trees are unmodified upstream mirrors, so a file overlay is
+        # enough there.
+        cd "$PATCHDIR"
         find hardware system -type f -print0 | xargs -0 cp -f --parents -t $GITHUB_WORKSPACE/workspace
         cd $GITHUB_WORKSPACE/workspace
         grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
         grep -q 'retry || tries == 0' system/libhidl/transport/ServiceManagement.cpp
-        echo "skipped on purpose: bootable/recovery/data.cpp, bootable/recovery/minuitwrp/graphics_drm.cpp"
+        # AERA carries its own data.cpp, so the LED fix ships as a diff against it.
+        shopt -s nullglob
+        for p in "$PATCHDIR"/aera/*.patch; do
+          patch -p1 --forward --batch < "$p"
+          echo "applied $(basename "$p")"
+        done
+        grep -q 'Find_Led_Path' bootable/recovery/data.cpp
+        echo "skipped on purpose: bootable/recovery/minuitwrp/graphics_drm.cpp"
 
     - name: Build AERA
       run: |
