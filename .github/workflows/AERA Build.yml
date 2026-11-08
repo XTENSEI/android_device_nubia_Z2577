@@ -55,6 +55,27 @@ jobs:
         echo "::endgroup::"
         df -h /
 
+    - name: Notify build started
+      env:
+        TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+        DEV: ${{ inputs.DEVICE_NAME }}
+        BRANCH: ${{ inputs.DEVICE_TREE_BRANCH }}
+        MANIFEST: ${{ inputs.AERA_BRANCH }}
+        URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        MSG=$(printf '%s\n' \
+          "⚙️ Build Started" \
+          "📋 Workflow: AERA Build" \
+          "📱 Device: ${DEV}" \
+          "🌿 Branch: ${BRANCH}" \
+          "📦 Manifest: ${MANIFEST}" \
+          "🔍 Watch on GitHub Actions (${URL})")
+        ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+        curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+          -H "Content-Type: application/json" \
+          -d "{\"chat_id\": \"${TG_CHAT}\", \"text\": ${ESCAPED}}" || true
+
     - name: Check Out
       uses: actions/checkout@v4
 
@@ -165,3 +186,83 @@ jobs:
           Target: vendor_boot.img
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    name: Telegram Summary
+    needs: build
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get run metadata
+        id: meta
+        run: |
+          RUN_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          CONCLUSION="${{ needs.build.result }}"
+          if [ "$CONCLUSION" = "success" ]; then
+            STATUS="Passed"
+          elif [ "$CONCLUSION" = "failure" ]; then
+            STATUS="Failed"
+          elif [ "$CONCLUSION" = "cancelled" ]; then
+            STATUS="Cancelled"
+          else
+            STATUS="$CONCLUSION"
+          fi
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          echo "run_url=$RUN_URL" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y%m%d)" >> "$GITHUB_OUTPUT"
+          echo "release_url=https://github.com/${{ github.repository }}/releases/tag/${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Get device tree commit
+        id: dtree_commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO_PATH=$(echo "${{ inputs.DEVICE_TREE_URL }}" | sed 's|https://github.com/||' | sed 's|\.git$||')
+          SHA=$(git ls-remote "https://github.com/${REPO_PATH}" "refs/heads/${{ inputs.DEVICE_TREE_BRANCH }}" | head -1 | cut -f1)
+          SHORT_SHA=$(echo "$SHA" | cut -c1-7)
+          COMMIT_URL="https://github.com/${REPO_PATH}/commit/${SHA}"
+          COMMIT_MSG=$(gh api "repos/${REPO_PATH}/commits/${SHA}" --jq '.commit.message | split("\n")[0][:80]' 2>/dev/null || echo "")
+          echo "sha=$SHORT_SHA" >> "$GITHUB_OUTPUT"
+          echo "url=$COMMIT_URL" >> "$GITHUB_OUTPUT"
+          echo "msg=$COMMIT_MSG" >> "$GITHUB_OUTPUT"
+
+      - name: Collect artifacts
+        id: artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ARTIFACTS=$(gh api "repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" --jq '.artifacts[] | "\(.name) (\(.size_in_bytes / 1048576 * 100 | floor / 100) MB)"' 2>/dev/null || echo "")
+          echo "list=$ARTIFACTS" >> "$GITHUB_OUTPUT"
+
+      - name: Send Telegram notification
+        env:
+          TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TG_CHAT: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEV: ${{ inputs.DEVICE_NAME }}
+          BRANCH: ${{ inputs.DEVICE_TREE_BRANCH }}
+          MANIFEST: ${{ inputs.AERA_BRANCH }}
+          DSHA: ${{ steps.dtree_commit.outputs.sha }}
+          STATUS: ${{ steps.meta.outputs.status }}
+          DATE: ${{ steps.meta.outputs.date }}
+          REL: ${{ steps.meta.outputs.release_url }}
+          URL: ${{ steps.meta.outputs.run_url }}
+        run: |
+          if [ "${STATUS}" = "Passed" ]; then
+            HEAD="🚀 Unofficial AERA Recovery Build Released"
+          else
+            HEAD="⚠️ Build ${STATUS}"
+          fi
+          MSG=$(printf '%s\n' \
+            "${HEAD}" \
+            "📋 Workflow: AERA Build" \
+            "📱 Device: ${DEV}" \
+            "🌿 Branch: ${BRANCH}" \
+            "📦 Manifest: ${MANIFEST}" \
+            "📅 Build Date: ${DATE}" \
+            "📝 Commit: ${DSHA}" \
+            "🔗 View Release on GitHub (${REL})" \
+            "🪵 Full Workflow Log (${URL})")
+          ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+          curl -s -X POST "https://api.telegram.org/bot${TG_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${TG_CHAT}\", \"text\": ${ESCAPED}}"
