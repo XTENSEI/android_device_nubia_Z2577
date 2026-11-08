@@ -26,13 +26,12 @@ on:
         required: true
         default: aera-16.0
       MINIMAL:
-        description: Apply AERA's remove-minimal.xml (drops ~600 unneeded projects)
+        description: Unused, kept out on purpose. See the sync step.
         type: choice
         options:
-        - "true"
         - "false"
         required: true
-        default: "true"
+        default: "false"
       RUNNER:
         description: Runner label. A full AOSP 16 sync does not fit a stock GitHub runner
         required: true
@@ -50,7 +49,6 @@ jobs:
         echo "Device Path: ${{ inputs.DEVICE_PATH }}"
         echo "Device Name: ${{ inputs.DEVICE_NAME }}"
         echo "Manifest: ${{ inputs.AERA_BRANCH }}"
-        echo "Minimal manifest: ${{ inputs.MINIMAL }}"
         echo "Build Target: vendor_boot.img"
         echo "::endgroup::"
         df -h /
@@ -110,13 +108,13 @@ jobs:
         cd ${GITHUB_WORKSPACE}/workspace
         repo init -u https://github.com/AERA-Recovery/android_manifest.git \
           -b ${{ inputs.AERA_BRANCH }}
-        if [ "${{ inputs.MINIMAL }}" = "true" ]; then
-          mkdir -p .repo/local_manifests
-          curl -fsSL -o .repo/local_manifests/remove-minimal.xml \
-            https://raw.githubusercontent.com/AERA-Recovery/android_manifest/${{ inputs.AERA_BRANCH }}/remove-minimal.xml
-        fi
+        # AERA also ships remove-minimal.xml, but on aera-16.0 every entry in it
+        # names a project the twrp-default layer already drops, and repo aborts
+        # with "remove-project element specifies non-existent project". The
+        # branch's own manifest already resolves to 411 projects, so sync as-is.
         repo sync -c --force-sync --no-clone-bundle --no-tags -j2
         df -h /
+        du -sh .
 
     - name: Clone device tree
       run: |
