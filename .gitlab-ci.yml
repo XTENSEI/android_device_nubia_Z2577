@@ -1,0 +1,127 @@
+# GitLab CI for the AERA Recovery build (nubia Z2577).
+#
+# Mirrors .github/workflows/AERA Build.yml which died on the hosted runner
+# ("The hosted runner lost communication"): sync 411 projects, then soong
+# analysis OOM. This job runs the same steps on a GitLab SaaS runner, with a
+# longer timeout and no workflow_dispatch indirection.
+#
+# Trigger: push to aera-16, or manual / API pipeline.
+#   glab ci run --branch aera-16
+# Override inputs with --variables, e.g.
+#   glab ci run --branch aera-16 --variables "AERA_BRANCH=aera-16.0"
+#
+# Telegram summary needs CI/CD variables TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID
+# (Settings > CI/CD > Variables). Without them the notifiers no-op.
+
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "aera-16"'
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_PIPELINE_SOURCE == "api"'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - when: never
+
+variables:
+  DEVICE_NAME: "Z2577"
+  DEVICE_PATH: "device/nubia/Z2577"
+  AERA_BRANCH: "aera-16.0"
+  BUILD_TARGET: "vendor_boot"
+  GIT_STRATEGY: "none"
+
+build:
+  image: ubuntu:22.04
+  timeout: 5h
+  script:
+    - echo "=== AERA Build ==="
+    - echo "device=$DEVICE_NAME branch=$CI_COMMIT_BRANCH manifest=$AERA_BRANCH"
+    - echo "pipeline $CI_PIPELINE_URL"
+    - df -h /
+
+    # Telegram: build started (no-op without CI variables)
+    - |
+      if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+        MSG=$(printf '%s\n' "⚙️ Build Started" "📋 Workflow: AERA Build (GitLab)" "📱 Device: ${DEVICE_NAME}" "🌿 Branch: ${CI_COMMIT_BRANCH}" "📦 Manifest: ${AERA_BRANCH}" "🔍 Watch on GitLab (${CI_PIPELINE_URL})")
+        ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -H "Content-Type: application/json" -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": ${ESCAPED}}" || true
+      else
+        echo "telegram: not configured, skipping started notify"
+      fi
+
+    - apt-get update
+    - apt-get install -y gperf g++-multilib libc6-dev lib32ncurses5-dev x11proto-core-dev libx11-dev tree lib32z-dev libgl1-mesa-dev libxml2-utils xsltproc bc ccache zip lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libxml2 lzop pngcrush schedtool squashfs-tools imagemagick libbz2-dev lzma ncftp qemu-user-static libstdc++-10-dev python3 git curl patch
+    - apt-get clean
+    - rm -rf /var/lib/apt/lists/*
+
+    - mkdir -p ~/bin
+    - curl -s https://storage.googleapis.com/git-repo-downloads/repo > ~/bin/repo
+    - chmod a+x ~/bin/repo
+    - cp ~/bin/repo /usr/local/bin/repo
+    - git config --global user.name "gitlab-ci"
+    - git config --global user.email "gitlab-ci@gitlab.local"
+
+    - mkdir -p workspace
+    - cd workspace
+    - repo init -u https://github.com/AERA-Recovery/android_manifest.git -b "$AERA_BRANCH"
+    # AERA also ships remove-minimal.xml, but on aera-16.0 every entry names a
+    # project the twrp-default layer already drops, so sync as-is (411 projects).
+    - repo sync -c --force-sync --no-clone-bundle --no-tags -j2
+    - df -h /
+    - du -sh .
+
+    # Device tree from this repo at the pipeline branch (origin is this project
+    # on GitLab, so no GitHub fetch is needed at all).
+    - git clone --branch "$CI_COMMIT_BRANCH" "$CI_REPOSITORY_URL" "$DEVICE_PATH"
+    - ls -la "$DEVICE_PATH"
+
+    - |
+      PATCHDIR="$CI_PROJECT_DIR/workspace/$DEVICE_PATH/patches"
+      cd "$PATCHDIR"
+      find hardware system -type f -print0 | xargs -0 cp -f --parents -t "$CI_PROJECT_DIR/workspace"
+      cd "$CI_PROJECT_DIR/workspace"
+      grep -q 'getService("default", false)' hardware/interfaces/boot/aidl/client/BootControlClient.cpp
+      grep -q 'retry || tries == 0' system/libhidl/transport/ServiceManagement.cpp
+      shopt -s nullglob
+      for p in "$PATCHDIR"/aera/*.patch; do patch -p1 --forward --batch < "$p"; echo "applied $(basename "$p")"; done
+      grep -q 'Find_Led_Path' bootable/recovery/data.cpp
+      echo "skipped on purpose: bootable/recovery/minuitwrp/graphics_drm.cpp"
+
+    - |
+      cd workspace
+      export AERA_BUILD_DEVICE="$DEVICE_NAME"
+      source build/envsetup.sh
+      lunch "twrp_${DEVICE_NAME}-bp2a-eng"
+      mka adbd vendorbootimage -j2
+
+    - |
+      OUT="workspace/out/target/product/${DEVICE_NAME}"
+      IMG="$OUT/vendor_boot.img"
+      [ -f "$IMG" ] || { echo "ERROR: vendor_boot.img was not produced"; exit 1; }
+      SZ=$(stat -c%s "$IMG")
+      PART=104857600
+      echo "vendor_boot.img : $SZ bytes"
+      echo "partition       : $PART bytes"
+      echo "headroom        : $((PART - SZ)) bytes"
+      for f in $OUT/obj/PACKAGING/vendor_ramdisk_fragments_intermediates/recovery.*; do [ -f "$f" ] && echo "$(basename "$f") : $(stat -c%s "$f") bytes"; done
+      if [ "$SZ" -gt "$PART" ]; then echo "ERROR: vendor_boot.img is $((SZ - PART)) bytes over the partition"; exit 1; fi
+      ls -lh "$OUT"
+
+  artifacts:
+    name: "aera-$DEVICE_NAME-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - workspace/out/target/product/$DEVICE_NAME/vendor_boot.img
+      - workspace/out/target/product/$DEVICE_NAME/AERA-R*.zip
+      - workspace/out/target/product/$DEVICE_NAME/AERA-R*.img
+      - workspace/out/target/product/$DEVICE_NAME/obj/PACKAGING/vendor_ramdisk_fragments_intermediates/recovery.*
+    expire_in: 90 days
+    when: always
+
+  after_script:
+    - |
+      if [ -n "$TELEGRAM_BOT_TOKEN" ] && [ -n "$TELEGRAM_CHAT_ID" ]; then
+        if [ "$CI_JOB_STATUS" = "success" ]; then HEAD="🚀 Unofficial AERA Recovery Build Released"; else HEAD="⚠️ Build ${CI_JOB_STATUS}"; fi
+        MSG=$(printf '%s\n' "$HEAD" "📋 Workflow: AERA Build (GitLab)" "📱 Device: ${DEVICE_NAME}" "🌿 Branch: ${CI_COMMIT_BRANCH}" "📦 Manifest: ${AERA_BRANCH}" "📅 Build Date: $(date -u +%Y%m%d)" "🔗 Pipeline (${CI_PIPELINE_URL})")
+        ESCAPED=$(echo "$MSG" | python3 -c "import sys,json; print(json.dumps(sys.stdin.read()))")
+        curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" -H "Content-Type: application/json" -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": ${ESCAPED}}" || true
+      else
+        echo "telegram: not configured, skipping summary notify"
+      fi
